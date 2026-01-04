@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-m3-surface text-m3-onSurface overflow-hidden h-screen w-screen;
+    /* Prevents the "bounce" scroll on tablets */
+    touch-action: pan-x pan-y;
+  }
+}
+
+@layer components {
+  .m3-card {
+    @apply bg-m3-surfaceLow border border-m3-outline/20 rounded-m3 p-6 shadow-sm;
+  }
+}
