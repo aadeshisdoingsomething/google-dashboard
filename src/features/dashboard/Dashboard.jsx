@@ -8,41 +8,49 @@ import 'react-resizable/css/styles.css';
 import ClockWidget from './widgets/ClockWidget';
 import WeatherWidget from './widgets/WeatherWidget';
 import CalendarWidget from './widgets/CalendarWidget';
+import NewsWidget from './widgets/NewsWidget'; // NEW IMPORT
 import SettingsPanel from './SettingsPanel';
 import { useSettings } from '../../context/SettingsContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-// --- NEW FINE-GRAINED GRID DEFAULTS ---
-// 12 Columns Total (vs 4 before).
-// Row Height is smaller (30px vs 100px).
-// This means "Width 6" = 50% screen. "Height 8" = approx 240px + gaps.
+// --- UPDATE DEFAULT LAYOUT ---
+// Added News Widget (Bottom Right on Desktop)
+// ... imports
+
 const defaultLayouts = {
   lg: [
-    { i: 'clock', x: 0, y: 0, w: 6, h: 8 },      // Half width, ~260px height
-    { i: 'weather', x: 6, y: 0, w: 6, h: 8 },    // Half width, ~260px height
-    { i: 'calendar', x: 0, y: 8, w: 12, h: 14 }, // Full width, tall
+    { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
+    { i: 'weather', x: 6, y: 0, w: 6, h: 8 },
+    { i: 'calendar', x: 0, y: 8, w: 12, h: 14 },
+    // NEWS: Full width, Short height (Horizontal Bar)
+    { i: 'news', x: 0, y: 22, w: 12, h: 3 }, 
   ],
   md: [
     { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
     { i: 'weather', x: 6, y: 0, w: 6, h: 8 },
     { i: 'calendar', x: 0, y: 8, w: 12, h: 14 },
+    { i: 'news', x: 0, y: 22, w: 12, h: 3 },
   ],
   sm: [
-    { i: 'clock', x: 0, y: 0, w: 6, h: 8 },      // On mobile (6 cols), this is full width
+    { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
     { i: 'weather', x: 0, y: 8, w: 6, h: 8 },
-    { i: 'calendar', x: 0, y: 16, w: 6, h: 12 },
+    { i: 'news', x: 0, y: 16, w: 6, h: 3 }, // Compact horizontal
+    { i: 'calendar', x: 0, y: 19, w: 6, h: 12 },
   ]
 };
+
+// ... rest of Dashboard component
 
 const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const theme = useTheme();
   
-  // NOTE: Key changed to 'v2' to force reset for new grid system
-  const [layouts, setLayouts] = useLocalStorage('dashboard_layouts_v2', defaultLayouts);
-  const { showWidgetClock, showWidgetWeather, showWidgetCalendar } = useSettings();
+  // NOTE: Key changed to 'v3' to reset layout and include the new widget
+  const [layouts, setLayouts] = useLocalStorage('dashboard_layouts_v4', defaultLayouts);
+  
+  const { showWidgetClock, showWidgetWeather, showWidgetCalendar, showWidgetNews } = useSettings();
 
   const getVisibleLayouts = () => {
     const visibleLayouts = {};
@@ -51,6 +59,7 @@ const Dashboard = () => {
         if (item.i === 'clock' && !showWidgetClock) return false;
         if (item.i === 'weather' && !showWidgetWeather) return false;
         if (item.i === 'calendar' && !showWidgetCalendar) return false;
+        if (item.i === 'news' && !showWidgetNews) return false;
         return true;
       });
     });
@@ -79,12 +88,9 @@ const Dashboard = () => {
     overflow: 'hidden',
     bgcolor: 'background.paper',
     display: 'flex', flexDirection: 'column', position: 'relative',
-    height: '100%', // Important for grid filling
+    height: '100%',
   };
 
-  // --- VISUAL ELEMENTS ---
-  
-  // 1. Top Drag Pill (Moves the widget)
   const DragHandle = () => (
     <Box className="drag-handle" sx={{
         height: 24, width: '100%', cursor: 'grab', display: 'flex', justifyContent: 'center',
@@ -95,8 +101,6 @@ const Dashboard = () => {
     </Box>
   );
 
-  // 2. Custom Resize Handle (Bottom Right Corner)
-  // This overrides the default tiny handle with a nice large click target.
   const CustomResizeHandle = React.forwardRef((props, ref) => {
     const { handleAxis, ...restProps } = props;
     return (
@@ -105,25 +109,11 @@ const Dashboard = () => {
         className={`react-resizable-handle react-resizable-handle-${handleAxis}`}
         {...restProps}
         sx={{
-          position: 'absolute',
-          bottom: 0,
-          right: 0,
-          width: '30px !important', // Large hit area
-          height: '30px !important',
-          cursor: 'se-resize',
-          zIndex: 30,
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'flex-end',
-          padding: '6px',
-          opacity: 0.5,
-          transition: 'opacity 0.2s',
-          '&:hover': { opacity: 1 },
-          // The visual corner graphic
+          position: 'absolute', bottom: 0, right: 0, width: '30px !important', height: '30px !important',
+          cursor: 'se-resize', zIndex: 30, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
+          padding: '6px', opacity: 0.5, transition: 'opacity 0.2s', '&:hover': { opacity: 1 },
           '&::after': {
-            content: '""',
-            width: '8px',
-            height: '8px',
+            content: '""', width: '8px', height: '8px',
             borderRight: `3px solid ${theme.palette.text.secondary}`,
             borderBottom: `3px solid ${theme.palette.text.secondary}`,
             borderBottomRightRadius: '2px'
@@ -135,8 +125,6 @@ const Dashboard = () => {
 
   return (
     <Box sx={{ p: 2, minHeight: '100vh', width: '100vw', bgcolor: 'background.default', color: 'text.primary' }}>
-      
-      {/* Settings Button */}
       <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 1000 }}>
         <IconButton onClick={() => setSettingsOpen(true)} sx={{ bgcolor: 'background.paper' }}>
           <SettingsIcon />
@@ -147,14 +135,13 @@ const Dashboard = () => {
         className="layout"
         layouts={getVisibleLayouts()}
         onLayoutChange={handleLayoutChange}
-        // GRID CONFIGURATION
         breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-        cols={{ lg: 12, md: 12, sm: 6 }} // 12 Columns = Finer horizontal control
-        rowHeight={30}                   // 30px Rows = Finer vertical control
+        cols={{ lg: 12, md: 12, sm: 6 }}
+        rowHeight={30}
         margin={[16, 16]}
         draggableHandle=".drag-handle"
-        resizeHandles={['se']} // Resize from South-East corner
-        resizeHandle={<CustomResizeHandle />} // Inject our custom handle
+        resizeHandles={['se']}
+        resizeHandle={<CustomResizeHandle />}
       >
         {showWidgetClock && (
           <Paper key="clock" sx={paperStyle}>
@@ -178,6 +165,16 @@ const Dashboard = () => {
             </Box>
           </Paper>
         )}
+        
+        {showWidgetNews && (
+          <Paper key="news" sx={paperStyle}>
+            <DragHandle />
+            <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+              <NewsWidget />
+            </Box>
+          </Paper>
+        )}
+
       </ResponsiveGridLayout>
 
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />

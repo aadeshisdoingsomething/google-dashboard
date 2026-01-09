@@ -10,18 +10,19 @@ export const SettingsProvider = ({ children }) => {
   const [themeMode, setThemeMode] = useLocalStorage('app_theme_mode', 'dark');
   const [effectiveTheme, setEffectiveTheme] = useState('dark');
 
-  // --- Widget Visibility (New) ---
+  // --- Widget Visibility ---
   const [showWidgetClock, setShowWidgetClock] = useLocalStorage('app_show_clock', true);
   const [showWidgetWeather, setShowWidgetWeather] = useLocalStorage('app_show_weather', true);
   const [showWidgetCalendar, setShowWidgetCalendar] = useLocalStorage('app_show_calendar', true);
+  // NEW: News Widget
+  const [showWidgetNews, setShowWidgetNews] = useLocalStorage('app_show_news', true);
 
-  // --- Clock Settings (New) ---
+  // --- Clock Settings ---
   const [timeFormat, setTimeFormat] = useLocalStorage('app_time_format', '12h');
   const [worldClock1, setWorldClock1] = useLocalStorage('app_wclock1', { show: false, city: 'London', zone: 'Europe/London' });
   const [worldClock2, setWorldClock2] = useLocalStorage('app_wclock2', { show: false, city: 'Tokyo', zone: 'Asia/Tokyo' });
 
   // --- Weather Settings ---
-  // Default to Baltimore
   const [weatherLocation, setWeatherLocation] = useLocalStorage('app_weather_loc', { name: 'Baltimore', lat: 39.2904, lon: -76.6122 });
   const [weatherRefreshRate, setWeatherRefreshRate] = useLocalStorage('app_weather_refresh', 10);
   const [tempUnit, setTempUnit] = useLocalStorage('app_temp_unit', 'fahrenheit'); 
@@ -54,6 +55,7 @@ export const SettingsProvider = ({ children }) => {
     showWidgetClock, setShowWidgetClock,
     showWidgetWeather, setShowWidgetWeather,
     showWidgetCalendar, setShowWidgetCalendar,
+    showWidgetNews, setShowWidgetNews, // New export
     // Clock
     timeFormat, setTimeFormat,
     worldClock1, setWorldClock1,
