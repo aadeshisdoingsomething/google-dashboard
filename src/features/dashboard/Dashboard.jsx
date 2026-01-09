@@ -8,23 +8,19 @@ import 'react-resizable/css/styles.css';
 import ClockWidget from './widgets/ClockWidget';
 import WeatherWidget from './widgets/WeatherWidget';
 import CalendarWidget from './widgets/CalendarWidget';
-import NewsWidget from './widgets/NewsWidget'; // NEW IMPORT
+import NewsWidget from './widgets/NewsWidget';
 import SettingsPanel from './SettingsPanel';
 import { useSettings } from '../../context/SettingsContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-// --- UPDATE DEFAULT LAYOUT ---
-// Added News Widget (Bottom Right on Desktop)
-// ... imports
-
+// --- DEFAULT LAYOUTS ---
 const defaultLayouts = {
   lg: [
     { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
     { i: 'weather', x: 6, y: 0, w: 6, h: 8 },
     { i: 'calendar', x: 0, y: 8, w: 12, h: 14 },
-    // NEWS: Full width, Short height (Horizontal Bar)
     { i: 'news', x: 0, y: 22, w: 12, h: 3 }, 
   ],
   md: [
@@ -36,19 +32,61 @@ const defaultLayouts = {
   sm: [
     { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
     { i: 'weather', x: 0, y: 8, w: 6, h: 8 },
-    { i: 'news', x: 0, y: 16, w: 6, h: 3 }, // Compact horizontal
+    { i: 'news', x: 0, y: 16, w: 6, h: 3 }, 
     { i: 'calendar', x: 0, y: 19, w: 6, h: 12 },
   ]
 };
 
-// ... rest of Dashboard component
+// --- OPTIMIZED RESIZE HANDLE (Defined OUTSIDE component) ---
+// This prevents re-rendering bugs that make resizing 'stuck' or laggy.
+const CustomResizeHandle = React.forwardRef((props, ref) => {
+  const { handleAxis, ...restProps } = props;
+  const theme = useTheme();
+
+  return (
+    <Box
+      ref={ref}
+      className={`react-resizable-handle react-resizable-handle-${handleAxis}`}
+      {...restProps}
+      sx={{
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        // Huge Touch Target (50px) for mobile ease
+        width: '50px !important', 
+        height: '50px !important',
+        cursor: 'se-resize',
+        zIndex: 50,
+        // Vital for mobile: Prevents scrolling when dragging corner
+        touchAction: 'none', 
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'flex-end',
+        padding: '8px', 
+        opacity: 0.6,
+        transition: 'opacity 0.2s',
+        // Visual indicator
+        '&::after': {
+          content: '""',
+          width: '12px',
+          height: '12px',
+          // Thicker, clearer borders
+          borderRight: `4px solid ${theme.palette.text.secondary}`,
+          borderBottom: `4px solid ${theme.palette.text.secondary}`,
+          borderBottomRightRadius: '4px'
+        },
+        '&:hover': { opacity: 1 },
+        '&:active': { opacity: 1, '&::after': { borderColor: theme.palette.primary.main } }
+      }}
+    />
+  );
+});
 
 const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const theme = useTheme();
   
-  // NOTE: Key changed to 'v3' to reset layout and include the new widget
-  const [layouts, setLayouts] = useLocalStorage('dashboard_layouts_v4', defaultLayouts);
+  // NOTE: Key changed to 'v5' to ensure everyone gets the new stable handle logic
+  const [layouts, setLayouts] = useLocalStorage('dashboard_layouts_v5', defaultLayouts);
   
   const { showWidgetClock, showWidgetWeather, showWidgetCalendar, showWidgetNews } = useSettings();
 
@@ -91,37 +129,17 @@ const Dashboard = () => {
     height: '100%',
   };
 
+  // Top Drag Handle (For moving)
   const DragHandle = () => (
     <Box className="drag-handle" sx={{
-        height: 24, width: '100%', cursor: 'grab', display: 'flex', justifyContent: 'center',
-        paddingTop: 1, position: 'absolute', top: 0, left: 0, zIndex: 20,
+        height: 30, // Taller drag area for easier grabbing
+        width: '100%', cursor: 'grab', display: 'flex', justifyContent: 'center',
+        paddingTop: 1.5, position: 'absolute', top: 0, left: 0, zIndex: 20,
         '&:active': { cursor: 'grabbing' }
     }}>
       <Box sx={{ width: 40, height: 4, borderRadius: 2, bgcolor: 'text.disabled', opacity: 0.2 }} />
     </Box>
   );
-
-  const CustomResizeHandle = React.forwardRef((props, ref) => {
-    const { handleAxis, ...restProps } = props;
-    return (
-      <Box
-        ref={ref}
-        className={`react-resizable-handle react-resizable-handle-${handleAxis}`}
-        {...restProps}
-        sx={{
-          position: 'absolute', bottom: 0, right: 0, width: '30px !important', height: '30px !important',
-          cursor: 'se-resize', zIndex: 30, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
-          padding: '6px', opacity: 0.5, transition: 'opacity 0.2s', '&:hover': { opacity: 1 },
-          '&::after': {
-            content: '""', width: '8px', height: '8px',
-            borderRight: `3px solid ${theme.palette.text.secondary}`,
-            borderBottom: `3px solid ${theme.palette.text.secondary}`,
-            borderBottomRightRadius: '2px'
-          }
-        }}
-      />
-    );
-  });
 
   return (
     <Box sx={{ p: 2, minHeight: '100vh', width: '100vw', bgcolor: 'background.default', color: 'text.primary' }}>
@@ -141,6 +159,7 @@ const Dashboard = () => {
         margin={[16, 16]}
         draggableHandle=".drag-handle"
         resizeHandles={['se']}
+        // Passing the external component instance prevents re-mounts!
         resizeHandle={<CustomResizeHandle />}
       >
         {showWidgetClock && (
