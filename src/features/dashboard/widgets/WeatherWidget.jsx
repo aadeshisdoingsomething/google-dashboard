@@ -36,29 +36,35 @@ const WeatherWidget = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [widgetWidth, setWidgetWidth] = useState(0);
+  const [containerDims, setContainerDims] = useState({ width: 0, height: 0 });
   const containerRef = useRef(null);
-  
-  const { 
+
+  const {
     weatherRefreshRate, tempUnit, weatherLocation,
-    showWeatherForecast, showWeatherHighLow, showWeatherRainChance 
+    showWeatherForecast, showWeatherHighLow, showWeatherRainChance
   } = useSettings();
-  
+
   const theme = useTheme();
 
-  // --- Resize Observer ---
+  // --- Resize Observer (Scales text based on container size) ---
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new ResizeObserver((entries) => {
       for (let entry of entries) {
-        setWidgetWidth(entry.contentRect.width);
+        setContainerDims({
+            width: entry.contentRect.width,
+            height: entry.contentRect.height
+        });
       }
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, []);
 
-  const isWide = widgetWidth > 450; 
+  // Dynamic Font Scaling
+  const baseSize = containerDims.width > 0 
+    ? Math.min(containerDims.width / 24, containerDims.height / 14) 
+    : 16;
 
   // --- Data Fetching ---
   useEffect(() => {
@@ -67,7 +73,7 @@ const WeatherWidget = () => {
         setLoading(true);
         const unitParam = tempUnit === 'celsius' ? 'celsius' : 'fahrenheit';
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${weatherLocation.lat}&longitude=${weatherLocation.lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=${unitParam}&wind_speed_unit=ms&timezone=auto`;
-        
+
         const res = await fetch(url);
         if (!res.ok) throw new Error("API Error");
         setData(await res.json());
@@ -91,170 +97,197 @@ const WeatherWidget = () => {
   const current = data.current;
   const daily = data.daily;
   const currentInfo = getWeatherInfo(current.weather_code);
-  
+
   const iconStyle = { fontVariationSettings: "'FILL' 1, 'wght' 400", display: 'block' };
 
   return (
-    <Box 
+    <Box
       ref={containerRef}
-      sx={{ 
-        width: '100%', height: '100%', 
-        display: 'flex', 
-        flexDirection: isWide ? 'row' : 'column', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        p: 3,
+      sx={{
+        width: '100%', 
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'row',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        bgcolor: 'background.paper',
+        fontSize: `${baseSize}px`, // Base scaling unit
+        p: '1em'
       }}
     >
-      
+
       {/* ==============================
-          SECTION 1: MAIN TEMP (LEFT)
+          LEFT SIDE: Current Weather
          ============================== */}
       <Box sx={{ 
-        flex: isWide ? 1 : 'unset',
-        width: '100%',
-        height: isWide ? '100%' : 'auto',
+        flex: 1, 
         display: 'flex', 
         flexDirection: 'column', 
         alignItems: 'center', 
         justifyContent: 'center',
-        mb: isWide ? 0 : 1
+        pr: '1em',
+        borderRight: showWeatherForecast ? `1px solid ${theme.palette.divider}` : 'none'
       }}>
         
-        {/* Location Name */}
-        <Typography variant="overline" sx={{ 
+        {/* Location */}
+        <Typography variant="overline" noWrap sx={{ 
           fontWeight: 700, 
           color: theme.palette.text.secondary, 
           lineHeight: 1, 
-          letterSpacing: '1px',
-          mb: 0.5 
+          letterSpacing: '0.05em',
+          mb: '0.5em',
+          fontSize: '0.8em',
+          width: '100%',
+          textAlign: 'center'
         }}>
           {weatherLocation.name}
         </Typography>
 
         {/* 
-            Icon + Scaled Temp Wrapper 
+            Icon + Temp 
+            Using a flex row with a gap keeps them tight together 
+            regardless of the container width.
         */}
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          gap: 0, // No gap, let the boxes handle spacing
-          height: isWide ? '70%' : '110px',
+          gap: '0.2em', // Tight gap
+          mb: '0.2em'
         }}>
-          
-          {/* Icon Container - Increased Size */}
-          <Box sx={{ 
-            width: isWide ? '110px' : '90px', 
-            display: 'flex', 
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
             <span 
                 className="material-symbols-rounded" 
                 style={{ 
                     ...iconStyle, 
-                    fontSize: isWide ? '100px' : '80px', // Larger Icon
+                    fontSize: '4.5em', 
                     color: currentInfo.icon.includes('sunny') ? '#FDB813' : theme.palette.text.primary,
                 }}
             >
                 {currentInfo.icon}
             </span>
-          </Box>
           
-          {/* SVG Temp - Tuned Viewbox */}
-          <Box sx={{ 
-            height: '100%', 
-            width: isWide ? '180px' : '150px', // Wider container
-            display: 'flex', alignItems: 'center', justifyContent: 'center' 
-          }}>
-            {/* 
-               viewBox="0 5 100 45": Crops the top empty space so font looks bigger
-               y="60%": Pushes text down to align vertically with the icon center
-            */}
-            <svg width="100%" height="100%" viewBox="0 5 100 45" preserveAspectRatio="xMidYMid meet">
-              <text x="50%" y="62%" dominantBaseline="middle" textAnchor="middle" 
-                fill={theme.palette.text.primary}
-                style={{ fontFamily: '"Google Sans", sans-serif', fontWeight: 400, fontSize: '55px' }} 
-              >
-                {Math.round(current.temperature_2m)}°
-              </text>
-            </svg>
-          </Box>
+            <Typography sx={{ 
+                fontFamily: '"Google Sans", sans-serif', 
+                fontWeight: 400, 
+                fontSize: '4em', // Scaled text
+                lineHeight: 1
+            }}>
+               {Math.round(current.temperature_2m)}°
+            </Typography>
         </Box>
 
-        {/* Description */}
-        <Typography variant="h6" color="text.secondary" sx={{ textTransform: 'capitalize', fontWeight: 500, mt: -0.5 }}>
+        {/* Condition Text */}
+        <Typography sx={{ 
+            textTransform: 'capitalize', 
+            fontWeight: 500, 
+            color: 'text.secondary',
+            fontSize: '1em',
+            mb: '1.2em'
+        }}>
           {currentInfo.desc}
         </Typography>
+
+        {/* Pills: High/Low & Rain */}
+        <Stack direction="row" spacing={'0.5em'} justifyContent="center" flexWrap="wrap">
+            {showWeatherHighLow && (
+              <Stack direction="row" alignItems="center" spacing={'0.2em'} sx={{ 
+                  bgcolor: 'action.hover', 
+                  px: '0.8em', py: '0.3em', 
+                  borderRadius: '1em' 
+              }}>
+                 <span className="material-symbols-rounded" style={{ ...iconStyle, fontSize: '1.2em', color: theme.palette.primary.main }}>thermostat</span>
+                 <Typography fontWeight="600" sx={{ fontSize: '0.75em' }}>
+                    {Math.round(daily.temperature_2m_max[0])}° / {Math.round(daily.temperature_2m_min[0])}°
+                 </Typography>
+              </Stack>
+            )}
+            {showWeatherRainChance && (
+              <Stack direction="row" alignItems="center" spacing={'0.2em'} sx={{ 
+                  bgcolor: 'action.hover', 
+                  px: '0.8em', py: '0.3em', 
+                  borderRadius: '1em' 
+              }}>
+                 <span className="material-symbols-rounded" style={{ ...iconStyle, fontSize: '1.2em', color: theme.palette.info.main }}>water_drop</span>
+                 <Typography fontWeight="600" sx={{ fontSize: '0.75em' }}>
+                   {daily.precipitation_probability_max[0]}%
+                 </Typography>
+              </Stack>
+            )}
+        </Stack>
       </Box>
 
 
       {/* ==============================
-          SECTION 2: DETAILS (RIGHT/BOTTOM)
+          RIGHT SIDE: Forecast Table
          ============================== */}
-      
-      {isWide && <Divider orientation="vertical" flexItem sx={{ mx: 2, opacity: 0.5 }} />}
+      {showWeatherForecast && (
+        <Box sx={{ 
+            flex: 1, 
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center', 
+            pl: '1em',
+            height: '100%',
+        }}>
+            {/* 
+               Grid Container
+               - Col 1: Day (auto width, aligned left)
+               - Col 2: Icon (1fr, centered)
+               - Col 3: Temps (auto width, aligned right)
+            */}
+            <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr auto', // The Table Structure
+                rowGap: '0.5em',
+                columnGap: '1em',
+                alignItems: 'center',
+                width: '100%',
+                // Add some padding if it feels too close to edges, but the gap handles internal spacing
+                px: '0.5em' 
+            }}>
+              {daily.time.slice(1, 6).map((day, index) => { 
+                const dayCode = daily.weather_code[index + 1];
+                const info = getWeatherInfo(dayCode);
+                const maxT = Math.round(daily.temperature_2m_max[index + 1]);
+                const minT = Math.round(daily.temperature_2m_min[index + 1]);
 
-      <Box sx={{ 
-        flex: isWide ? 1.2 : 'unset', 
-        width: '100%',
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        justifyContent: 'center'
-      }}>
-        
-        {/* High / Low / Rain */}
-        {(showWeatherHighLow || showWeatherRainChance) && (
-          <Stack direction="row" spacing={2} sx={{ mb: showWeatherForecast ? 2 : 0, mt: isWide ? 0 : 2 }}>
-            {showWeatherHighLow && (
-              <Stack direction="row" alignItems="center" spacing={0.5} sx={{ bgcolor: 'action.hover', px: 1.5, py: 0.5, borderRadius: 4 }}>
-                 <span className="material-symbols-rounded" style={{ ...iconStyle, fontSize: 18, color: theme.palette.primary.main }}>thermostat</span>
-                 <Typography variant="body2" fontWeight="600">{Math.round(daily.temperature_2m_max[0])}° / {Math.round(daily.temperature_2m_min[0])}°</Typography>
-              </Stack>
-            )}
-            {showWeatherRainChance && (
-              <Stack direction="row" alignItems="center" spacing={0.5} sx={{ bgcolor: 'action.hover', px: 1.5, py: 0.5, borderRadius: 4 }}>
-                 <span className="material-symbols-rounded" style={{ ...iconStyle, fontSize: 18, color: theme.palette.primary.main }}>water_drop</span>
-                 <Typography variant="body2" fontWeight="600">{daily.precipitation_probability_max[0]}%</Typography>
-              </Stack>
-            )}
-          </Stack>
-        )}
+                return (
+                  <React.Fragment key={day}>
+                    {/* Column 1: Day Name */}
+                    <Typography sx={{ 
+                        fontWeight: 700, 
+                        color: theme.palette.text.secondary,
+                        fontSize: '0.85em',
+                        textAlign: 'left'
+                    }}>
+                      {getDayName(day).toUpperCase()}
+                    </Typography>
 
-        {/* 5-Day Forecast */}
-        {showWeatherForecast && (
-          <Box sx={{ 
-            width: '100%', 
-            mt: isWide ? 3 : 2, 
-            pt: isWide ? 0 : 2,
-            borderTop: isWide ? 'none' : `1px solid ${theme.palette.divider}`,
-            display: 'flex', 
-            justifyContent: 'space-between' 
-          }}>
-            {daily.time.slice(1, 6).map((day, index) => { 
-              const dayCode = daily.weather_code[index + 1];
-              const info = getWeatherInfo(dayCode);
-              return (
-                <Box key={day} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 35 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, mb: 0.5, letterSpacing: '0.5px' }}>
-                    {getDayName(day).toUpperCase()}
-                  </Typography>
-                  <span className="material-symbols-rounded" style={{ ...iconStyle, fontSize: 26, color: theme.palette.text.secondary }}>
-                    {info.icon}
-                  </span>
-                  <Typography variant="caption" fontWeight="bold" sx={{ mt: 0.5 }}>
-                    {Math.round(daily.temperature_2m_max[index + 1])}°
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
-        )}
-      </Box>
+                    {/* Column 2: Icon */}
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <span className="material-symbols-rounded" style={{ ...iconStyle, fontSize: '1.5em', color: theme.palette.text.primary }}>
+                            {info.icon}
+                        </span>
+                    </Box>
+
+                    {/* Column 3: Temperatures */}
+                    <Stack direction="row" spacing={'0.3em'} alignItems="center" sx={{ justifyContent: 'flex-end' }}>
+                        <Typography fontWeight="bold" sx={{ fontSize: '0.9em' }}>
+                          {maxT}°
+                        </Typography>
+                        <Typography color="text.secondary" sx={{ fontSize: '0.75em', opacity: 0.7 }}>
+                          /
+                        </Typography>
+                        <Typography color="text.secondary" sx={{ fontSize: '0.9em' }}>
+                          {minT}°
+                        </Typography>
+                    </Stack>
+                  </React.Fragment>
+                );
+              })}
+            </Box>
+        </Box>
+      )}
 
     </Box>
   );
