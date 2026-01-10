@@ -49,7 +49,7 @@ const NewsWidget = () => {
   const audioRef = useRef(new Audio());
   const theme = useTheme();
 
-  // --- FETCH LOGIC ---
+// --- FETCH LOGIC ---
   const fetchNews = async (isAutoRefresh = false) => {
     // Don't auto-refresh interrupt if playing
     if (isAutoRefresh && isPlaying) return; 
@@ -60,10 +60,27 @@ const NewsWidget = () => {
     }
 
     try {
-      const RSS_URL = 'https://feeds.npr.org/500005/podcast.xml';
+      // 1. CACHE BUSTING STRATEGY
+      // We generate a unique timestamp
+      const timestamp = new Date().getTime();
+      
+      // We attach it to the NPR URL so the Proxy server treats it as a new resource (Bypasses Proxy Cache)
+      const RSS_URL = `https://feeds.npr.org/500005/podcast.xml?_t=${timestamp}`;
+      
+      // We encode that unique URL into the Proxy URL (Bypasses Browser/PWA Cache because the full URL changes)
       const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(RSS_URL)}`;
       
-      const res = await fetch(proxyUrl);
+      // 2. FETCH OPTIONS
+      // We explicitly tell the browser not to store this in the cache
+      const res = await fetch(proxyUrl, {
+        cache: 'no-store',
+        headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+      });
+
       if (!res.ok) throw new Error("Network response was not ok");
       const textData = await res.text();
       
@@ -84,23 +101,20 @@ const NewsWidget = () => {
       });
 
       if (newPlaylist.length > 0) {
-        // If it's a manual refresh or first load, reset to top
         if (!isAutoRefresh) {
             setPlaylist(newPlaylist);
             setCurrentIndex(0);
+            // Only update audio source if it's actually different (Prevents glitching)
             if (audioRef.current.src !== newPlaylist[0].audioUrl) {
                 audioRef.current.src = newPlaylist[0].audioUrl;
                 setProgress(0);
                 setCurrentTime(0);
             }
         } else {
-            // Smart update: if new top item is different, update playlist
-            // but try to keep current index pointing to the same audio if possible, or reset.
-            // For simplicity in a "News Now" context, we usually just update the list.
+            // Smart update: Only update if the top story has changed
             if (newPlaylist[0].audioUrl !== playlist[0]?.audioUrl) {
+                console.log("New news found, updating playlist...");
                 setPlaylist(newPlaylist);
-                // We don't auto-play or reset index here to avoid jarring jumps,
-                // the user will see the new time info when they hit next/prev or finish.
             }
         }
       } else {
