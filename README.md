@@ -38,6 +38,9 @@ my-dashboard
 │   │   ├── auth/
 │   │   │   └── PinPad.jsx
 │   │   └── dashboard/
+│   │       ├── services/
+│   │       │   ├── nprService.js
+│   │       │   └── stations.js
 │   │       ├── settings/
 │   │       │   ├── CalendarSettings.jsx
 │   │       │   ├── ClockSettings.jsx
@@ -45,6 +48,11 @@ my-dashboard
 │   │       │   ├── SearchOverlay.jsx
 │   │       │   └── WeatherSettings.jsx
 │   │       ├── widgets/
+│   │       │   ├── components/
+│   │       │   │   ├── LiveVisualizer.jsx
+│   │       │   │   ├── NewsLogo.jsx
+│   │       │   │   ├── SourcePicker.jsx
+│   │       │   │   └── Waveform.jsx
 │   │       │   ├── CalendarWidget.jsx
 │   │       │   ├── ClockWidget.jsx
 │   │       │   ├── NewsWidget.jsx
@@ -52,7 +60,8 @@ my-dashboard
 │   │       ├── Dashboard.jsx
 │   │       └── SettingsPanel.jsx
 │   ├── hooks/
-│   │   └── useLocalStorage.js
+│   │   ├── useLocalStorage.js
+│   │   └── useNewsPlayer.js
 │   ├── App.css
 │   ├── App.jsx
 │   ├── index.css
@@ -124,6 +133,9 @@ my-dashboard
 │   │   ├── auth/
 │   │   │   └── PinPad.jsx
 │   │   └── dashboard/
+│   │       ├── services/
+│   │       │   ├── nprService.js
+│   │       │   └── stations.js
 │   │       ├── settings/
 │   │       │   ├── CalendarSettings.jsx
 │   │       │   ├── ClockSettings.jsx
@@ -131,6 +143,11 @@ my-dashboard
 │   │       │   ├── SearchOverlay.jsx
 │   │       │   └── WeatherSettings.jsx
 │   │       ├── widgets/
+│   │       │   ├── components/
+│   │       │   │   ├── LiveVisualizer.jsx
+│   │       │   │   ├── NewsLogo.jsx
+│   │       │   │   ├── SourcePicker.jsx
+│   │       │   │   └── Waveform.jsx
 │   │       │   ├── CalendarWidget.jsx
 │   │       │   ├── ClockWidget.jsx
 │   │       │   ├── NewsWidget.jsx
@@ -138,7 +155,8 @@ my-dashboard
 │   │       ├── Dashboard.jsx
 │   │       └── SettingsPanel.jsx
 │   ├── hooks/
-│   │   └── useLocalStorage.js
+│   │   ├── useLocalStorage.js
+│   │   └── useNewsPlayer.js
 │   ├── App.css
 │   ├── App.jsx
 │   ├── index.css

@@ -1,16 +1,11 @@
-/**
- * Service to fetch and parse NPR News Now RSS feed.
- * Returns a normalized playlist of audio tracks.
- */
-export const fetchNprFeed = async () => {
-  // 1. Cache Busting: Unique timestamp to bypass Browser & Proxy cache
+// Add 'feedUrl' parameter
+export const fetchNprFeed = async (feedUrl) => {
   const timestamp = new Date().getTime();
-  const RSS_URL = `https://feeds.npr.org/500005/podcast.xml?_t=${timestamp}`;
+  // Append timestamp to the passed URL
+  const uniqueUrl = `${feedUrl}?_t=${timestamp}`;
   
-  // 2. Proxy: Use corsproxy.io to bypass CORS restrictions
-  const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(RSS_URL)}`;
+  const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(uniqueUrl)}`;
 
-  // 3. Fetch with headers to prevent caching
   const res = await fetch(proxyUrl, {
     cache: 'no-store',
     headers: {
@@ -22,9 +17,8 @@ export const fetchNprFeed = async () => {
 
   if (!res.ok) throw new Error("Network response was not ok");
   
+  // ... rest of XML parsing logic remains the same ...
   const textData = await res.text();
-  
-  // 4. Parse XML
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(textData, "text/xml");
   const items = xmlDoc.querySelectorAll('item');
@@ -37,15 +31,8 @@ export const fetchNprFeed = async () => {
     const enclosure = item.querySelector('enclosure');
     const audioUrl = enclosure ? enclosure.getAttribute('url') : null;
     
-    // Validate we actually have audio
     if (audioUrl) {
-      playlist.push({ 
-        title, 
-        pubDate, 
-        audioUrl,
-        // Optional: Add metadata here if needed later (e.g. duration from RSS)
-        source: 'NPR' 
-      });
+      playlist.push({ title, pubDate, audioUrl, source: 'NPR' });
     }
   });
 

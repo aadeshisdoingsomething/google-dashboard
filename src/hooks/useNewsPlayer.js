@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { fetchNprFeed } from '../features/dashboard/services/nprService';
+import { STATIONS } from '../features/dashboard/services/stations';
 
 const useNewsPlayer = () => {
+  const [currentStation, setCurrentStation] = useState(STATIONS[0]);
+  
   const [playlist, setPlaylist] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -14,51 +17,69 @@ const useNewsPlayer = () => {
 
   const audioRef = useRef(new Audio());
 
-  // --- FETCH LOGIC ---
-  const loadData = async (isAutoRefresh = false) => {
-    if (isAutoRefresh && isPlaying) return; 
-
+  // --- MAIN LOAD LOGIC ---
+  const loadStation = async (station = currentStation, isAutoRefresh = false) => {
     if (!isAutoRefresh) {
         setLoading(true);
         setError(false);
+        audioRef.current.pause();
+        setIsPlaying(false);
     }
 
     try {
-      const newPlaylist = await fetchNprFeed();
-      
-      if (!isAutoRefresh) {
-          setPlaylist(newPlaylist);
-          setCurrentIndex(0);
-          
-          if (audioRef.current.src !== newPlaylist[0].audioUrl) {
-              audioRef.current.src = newPlaylist[0].audioUrl;
-              setProgress(0);
-              setCurrentTime(0);
-          }
+      if (station.type === 'rss') {
+        const newPlaylist = await fetchNprFeed(station.url);
+        
+        if (!isAutoRefresh) {
+            setPlaylist(newPlaylist);
+            setCurrentIndex(0);
+            audioRef.current.src = newPlaylist[0].audioUrl;
+            setProgress(0);
+            setCurrentTime(0);
+        } else {
+            if (newPlaylist[0].audioUrl !== playlist[0]?.audioUrl) {
+                setPlaylist(newPlaylist);
+            }
+        }
       } else {
-          // Silent update check
-          if (newPlaylist[0].audioUrl !== playlist[0]?.audioUrl) {
-              console.log("New news found, updating playlist...");
-              setPlaylist(newPlaylist);
-          }
+        // Live Logic
+        setPlaylist([]); 
+        audioRef.current.src = station.url;
+        setProgress(0);
+        setCurrentTime(0);
+        setDuration(0);
       }
     } catch (err) {
-      console.error("News load failed", err);
+      console.error("Load failed", err);
       if (!isAutoRefresh) setError(true);
     } finally {
       if (!isAutoRefresh) setLoading(false);
     }
   };
 
+  // --- SWITCH STATION ---
+  const changeStation = (stationId) => {
+    const newStation = STATIONS.find(s => s.id === stationId);
+    if (newStation) {
+        setCurrentStation(newStation);
+        loadStation(newStation, false);
+    }
+  };
+
   // --- LIFECYCLE ---
   useEffect(() => {
-    loadData();
+    loadStation(currentStation, false);
 
-    const interval = setInterval(() => loadData(true), 5 * 60 * 1000);
+    const interval = setInterval(() => {
+        if (currentStation.type === 'rss') {
+            loadStation(currentStation, true);
+        }
+    }, 5 * 60 * 1000);
+
     const audio = audioRef.current;
 
     const onTimeUpdate = () => {
-        if (audio.duration && !isNaN(audio.duration)) {
+        if (currentStation.type === 'rss' && audio.duration && !isNaN(audio.duration)) {
             setCurrentTime(audio.currentTime);
             setDuration(audio.duration);
             setProgress((audio.currentTime / audio.duration) * 100);
@@ -66,9 +87,11 @@ const useNewsPlayer = () => {
     };
 
     const onEnded = () => {
-        setIsPlaying(false);
-        setProgress(0);
-        setCurrentTime(0);
+        if (currentStation.type === 'rss') {
+            setIsPlaying(false);
+            setProgress(0);
+            setCurrentTime(0);
+        }
     };
     
     const onPause = () => setIsPlaying(false);
@@ -87,47 +110,62 @@ const useNewsPlayer = () => {
       audio.removeEventListener('play', onPlay);
       clearInterval(interval);
     };
-  }, []);
+  }, [currentStation]);
 
   // --- CONTROLS ---
-  const loadTrack = (index) => {
-    if (index >= 0 && index < playlist.length) {
-        setCurrentIndex(index);
-        audioRef.current.src = playlist[index].audioUrl;
-        audioRef.current.play().catch(e => console.error(e));
-        setIsPlaying(true);
-    }
-  };
-
-  const handlePrev = () => {
-      if (currentIndex < playlist.length - 1) loadTrack(currentIndex + 1);
-  };
-
-  const handleNext = () => {
-      if (currentIndex > 0) loadTrack(currentIndex - 1);
-  };
-
   const togglePlay = () => {
     if (isPlaying) audioRef.current.pause();
     else audioRef.current.play().catch(e => console.error("Play failed", e));
   };
 
-  const skipTime = (seconds) => {
-    if (audioRef.current.duration) audioRef.current.currentTime += seconds;
-  };
-
   const handleSeek = (event, newValue) => {
-    if (audioRef.current.duration) {
+    if (currentStation.type === 'rss' && audioRef.current.duration) {
         const newTime = (newValue / 100) * audioRef.current.duration;
         audioRef.current.currentTime = newTime;
         setProgress(newValue);
     }
   };
 
+  // --- UNIVERSAL NAVIGATION ---
+  const handlePrev = () => {
+      if (currentStation.type === 'rss') {
+          // RSS: Go to older news item
+          if (currentIndex < playlist.length - 1) {
+              const newIndex = currentIndex + 1;
+              setCurrentIndex(newIndex);
+              audioRef.current.src = playlist[newIndex].audioUrl;
+              audioRef.current.play();
+          }
+      } else {
+          // Live: Go to previous station in list
+          const index = STATIONS.findIndex(s => s.id === currentStation.id);
+          const prevIndex = (index - 1 + STATIONS.length) % STATIONS.length;
+          changeStation(STATIONS[prevIndex].id);
+      }
+  };
+
+  const handleNext = () => {
+      if (currentStation.type === 'rss') {
+          // RSS: Go to newer news item
+          if (currentIndex > 0) {
+              const newIndex = currentIndex - 1;
+              setCurrentIndex(newIndex);
+              audioRef.current.src = playlist[newIndex].audioUrl;
+              audioRef.current.play();
+          }
+      } else {
+          // Live: Go to next station in list
+          const index = STATIONS.findIndex(s => s.id === currentStation.id);
+          const nextIndex = (index + 1) % STATIONS.length;
+          changeStation(STATIONS[nextIndex].id);
+      }
+  };
+
   return {
+    currentStation, changeStation,
     playlist, currentIndex, loading, error,
     isPlaying, progress, currentTime, duration,
-    togglePlay, skipTime, handleSeek, handleNext, handlePrev, loadData
+    togglePlay, handleSeek, handleNext, handlePrev
   };
 };
 
