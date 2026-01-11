@@ -9,12 +9,14 @@ export const SettingsProvider = ({ children }) => {
   // --- General ---
   const [themeMode, setThemeMode] = useLocalStorage('app_theme_mode', 'dark');
   const [effectiveTheme, setEffectiveTheme] = useState('dark');
+  
+  // NEW: Tutorial State
+  const [tutorialSeen, setTutorialSeen] = useLocalStorage('app_tutorial_seen_v1', false);
 
   // --- Widget Visibility ---
   const [showWidgetClock, setShowWidgetClock] = useLocalStorage('app_show_clock', true);
   const [showWidgetWeather, setShowWidgetWeather] = useLocalStorage('app_show_weather', true);
   const [showWidgetCalendar, setShowWidgetCalendar] = useLocalStorage('app_show_calendar', true);
-  // NEW: News Widget
   const [showWidgetNews, setShowWidgetNews] = useLocalStorage('app_show_news', true);
 
   // --- Clock Settings ---
@@ -34,7 +36,6 @@ export const SettingsProvider = ({ children }) => {
   const [calendarUrl, setCalendarUrl] = useLocalStorage('app_calendar_url', '');
   const [calendarRefreshRate, setCalendarRefreshRate] = useLocalStorage('app_calendar_refresh', 60);
 
-  // --- Theme Logic ---
   useEffect(() => {
     const calculateTheme = () => {
       if (themeMode === 'auto') {
@@ -51,11 +52,12 @@ export const SettingsProvider = ({ children }) => {
 
   const value = {
     themeMode, setThemeMode, effectiveTheme,
+    tutorialSeen, setTutorialSeen, // Exported
     // Visibility
     showWidgetClock, setShowWidgetClock,
     showWidgetWeather, setShowWidgetWeather,
     showWidgetCalendar, setShowWidgetCalendar,
-    showWidgetNews, setShowWidgetNews, // New export
+    showWidgetNews, setShowWidgetNews,
     // Clock
     timeFormat, setTimeFormat,
     worldClock1, setWorldClock1,

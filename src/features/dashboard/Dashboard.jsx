@@ -10,12 +10,12 @@ import WeatherWidget from './widgets/WeatherWidget';
 import CalendarWidget from './widgets/CalendarWidget';
 import NewsWidget from './widgets/NewsWidget';
 import SettingsPanel from './SettingsPanel';
+import TutorialDialog from './TutorialDialog'; // NEW IMPORT
 import { useSettings } from '../../context/SettingsContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-// --- DEFAULT LAYOUTS ---
 const defaultLayouts = {
   lg: [
     { i: 'clock', x: 0, y: 3, w: 6, h: 7 },
@@ -37,40 +37,22 @@ const defaultLayouts = {
   ]
 };
 
-// --- OPTIMIZED RESIZE HANDLE (Defined OUTSIDE component) ---
-// This prevents re-rendering bugs that make resizing 'stuck' or laggy.
+// ... (Keep CustomResizeHandle definition here exactly as before) ...
 const CustomResizeHandle = React.forwardRef((props, ref) => {
   const { handleAxis, ...restProps } = props;
   const theme = useTheme();
-
   return (
     <Box
       ref={ref}
       className={`react-resizable-handle react-resizable-handle-${handleAxis}`}
       {...restProps}
       sx={{
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        // Huge Touch Target (50px) for mobile ease
-        width: '50px !important', 
-        height: '50px !important',
-        cursor: 'se-resize',
-        zIndex: 50,
-        // Vital for mobile: Prevents scrolling when dragging corner
-        touchAction: 'none', 
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'flex-end',
-        padding: '8px', 
-        opacity: 0.6,
-        transition: 'opacity 0.2s',
-        // Visual indicator
+        position: 'absolute', bottom: 0, right: 0,
+        width: '50px !important', height: '50px !important', cursor: 'se-resize', zIndex: 50,
+        touchAction: 'none', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
+        padding: '8px', opacity: 0.6, transition: 'opacity 0.2s',
         '&::after': {
-          content: '""',
-          width: '12px',
-          height: '12px',
-          // Thicker, clearer borders
+          content: '""', width: '12px', height: '12px',
           borderRight: `4px solid ${theme.palette.text.secondary}`,
           borderBottom: `4px solid ${theme.palette.text.secondary}`,
           borderBottomRightRadius: '4px'
@@ -85,7 +67,6 @@ const CustomResizeHandle = React.forwardRef((props, ref) => {
 const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   
-  // NOTE: Key changed to 'v5' to ensure everyone gets the new stable handle logic
   const [layouts, setLayouts] = useLocalStorage('dashboard_layouts_v5', defaultLayouts);
   
   const { showWidgetClock, showWidgetWeather, showWidgetCalendar, showWidgetNews } = useSettings();
@@ -129,11 +110,9 @@ const Dashboard = () => {
     height: '100%',
   };
 
-  // Top Drag Handle (For moving)
   const DragHandle = () => (
     <Box className="drag-handle" sx={{
-        height: 30, // Taller drag area for easier grabbing
-        width: '100%', cursor: 'grab', display: 'flex', justifyContent: 'center',
+        height: 30, width: '100%', cursor: 'grab', display: 'flex', justifyContent: 'center',
         paddingTop: 1.5, position: 'absolute', top: 0, left: 0, zIndex: 20,
         '&:active': { cursor: 'grabbing' }
     }}>
@@ -143,6 +122,10 @@ const Dashboard = () => {
 
   return (
     <Box sx={{ p: 2, minHeight: '100vh', width: '100vw', bgcolor: 'background.default', color: 'text.primary' }}>
+      
+      {/* GLOBAL TUTORIAL DIALOG */}
+      <TutorialDialog />
+
       <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 1000 }}>
         <IconButton onClick={() => setSettingsOpen(true)} sx={{ bgcolor: 'background.paper' }}>
           <SettingsIcon />
@@ -159,7 +142,6 @@ const Dashboard = () => {
         margin={[16, 16]}
         draggableHandle=".drag-handle"
         resizeHandles={['se']}
-        // Passing the external component instance prevents re-mounts!
         resizeHandle={<CustomResizeHandle />}
       >
         {showWidgetClock && (

@@ -87,7 +87,7 @@ const InstallAppSection = () => {
                 iPhone / iPad (Safari)
               </Typography>
               <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                1. Tap the <b>Share</b> button <IosShareIcon fontSize="inherit" />
+                1. Tap the 3 dots (<MoreVertIcon fontSize="inherit" />) and then click the <b>Share</b> button <IosShareIcon fontSize="inherit" />
               </Typography>
               <Typography variant="body2">
                 2. Scroll down and tap <b>"Add to Home Screen"</b>.

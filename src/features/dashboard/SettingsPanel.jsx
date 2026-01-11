@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Divider } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Divider, Typography } from '@mui/material';
 import { useSettings } from '../../context/SettingsContext';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 // Import sub-components
 import SearchOverlay from './settings/SearchOverlay';
@@ -8,19 +9,17 @@ import GeneralSettings from './settings/GeneralSettings';
 import ClockSettings from './settings/ClockSettings';
 import WeatherSettings from './settings/WeatherSettings';
 import CalendarSettings from './settings/CalendarSettings';
-import InstallAppSection from './settings/InstallAppSection'; // NEW IMPORT
+import InstallAppSection from './settings/InstallAppSection';
 
 const SettingsPanel = ({ open, onClose }) => {
   const settings = useSettings();
-  
-  // Local state for Calendar URL (to only save on "Save")
   const [tempCalUrl, setTempCalUrl] = useState(settings.calendarUrl);
-
+  
   // --- Search Logic State ---
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchMode, setSearchMode] = useState(null); // 'weather', 'clock1', 'clock2'
+  const [searchMode, setSearchMode] = useState(null); 
 
   // --- Handlers ---
   const handleSearch = async () => {
@@ -45,16 +44,19 @@ const SettingsPanel = ({ open, onClose }) => {
     } else if (searchMode === 'clock2') {
       settings.setWorldClock2(prev => ({ ...prev, city: loc.name, zone: loc.timezone }));
     }
-    // Cleanup
     setSearchResults([]);
     setSearchTerm('');
     setSearchMode(null);
   };
 
   const handleSave = () => {
-    // Commit the calendar URL only on save
     settings.setCalendarUrl(tempCalUrl);
     onClose();
+  };
+
+  const handleReplayTutorial = () => {
+    settings.setTutorialSeen(false); // Reset state
+    onClose(); // Close settings to see it
   };
 
   return (
@@ -63,7 +65,7 @@ const SettingsPanel = ({ open, onClose }) => {
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
           
-          {/* 1. Search Overlay (Conditional) */}
+          {/* 1. Search Overlay */}
           <SearchOverlay 
             mode={searchMode}
             searchTerm={searchTerm}
@@ -76,20 +78,32 @@ const SettingsPanel = ({ open, onClose }) => {
           />
 
           {/* 2. Settings Modules */}
-          {/* Hide others when searching to keep UI clean */}
           {!searchMode && (
             <>
-              {/* NEW: Install App Banner (Only shows if in browser) */}
               <InstallAppSection />
               
               <GeneralSettings />
+              
+              {/* Tutorial Replay Button */}
+              <Button 
+                startIcon={<HelpOutlineIcon />} 
+                onClick={handleReplayTutorial}
+                sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
+              >
+                Replay Welcome Tutorial
+              </Button>
+
               <Divider />
               <ClockSettings onSearchRequest={setSearchMode} />
               <Divider />
               <WeatherSettings onSearchRequest={setSearchMode} />
               <Divider />
-              {/* Pass the setter for the temp URL */}
               <CalendarSettings onUrlChange={setTempCalUrl} />
+
+              {/* Version Footer */}
+              <Box sx={{ textAlign: 'center', mt: 2, opacity: 0.5 }}>
+                <Typography variant="caption">Version: 0.9.0</Typography>
+              </Box>
             </>
           )}
 
