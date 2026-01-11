@@ -8,6 +8,7 @@ import GeneralSettings from './settings/GeneralSettings';
 import ClockSettings from './settings/ClockSettings';
 import WeatherSettings from './settings/WeatherSettings';
 import CalendarSettings from './settings/CalendarSettings';
+import InstallAppSection from './settings/InstallAppSection'; // NEW IMPORT
 
 const SettingsPanel = ({ open, onClose }) => {
   const settings = useSettings();
@@ -78,6 +79,9 @@ const SettingsPanel = ({ open, onClose }) => {
           {/* Hide others when searching to keep UI clean */}
           {!searchMode && (
             <>
+              {/* NEW: Install App Banner (Only shows if in browser) */}
+              <InstallAppSection />
+              
               <GeneralSettings />
               <Divider />
               <ClockSettings onSearchRequest={setSearchMode} />
