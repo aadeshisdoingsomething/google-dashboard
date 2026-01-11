@@ -1,46 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Box, Typography, Button, IconButton, Divider, TextField, Switch, 
-  FormControlLabel, FormGroup, Dialog, DialogTitle, DialogContent, 
+  Box, Typography, Button, Dialog, DialogTitle, DialogContent, 
   DialogContentText, DialogActions, Paper 
 } from '@mui/material';
-import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-
-// Icons
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import WorkRoundedIcon from '@mui/icons-material/WorkRounded';
-import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
-import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
-import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
-import SportsEsportsRoundedIcon from '@mui/icons-material/SportsEsportsRounded';
 import WidgetsRoundedIcon from '@mui/icons-material/WidgetsRounded';
 
 import { useSettings } from '../../../context/SettingsContext';
 
-const ICONS = [
-  { id: 'Home', icon: <HomeRoundedIcon /> },
-  { id: 'Work', icon: <WorkRoundedIcon /> },
-  { id: 'Calendar', icon: <CalendarMonthRoundedIcon /> },
-  { id: 'School', icon: <SchoolRoundedIcon /> },
-  { id: 'Star', icon: <StarRoundedIcon /> },
-  { id: 'Person', icon: <PersonRoundedIcon /> },
-  { id: 'Game', icon: <SportsEsportsRoundedIcon /> },
-  { id: 'General', icon: <WidgetsRoundedIcon /> },
-];
+// Import the separated files
+import PageEditor from './PageEditor';
+import { INITIAL_LAYOUTS, INITIAL_WIDGETS, ICONS } from './layoutDefaults';
 
 const PageSettings = () => {
   const { pages, addPage, updatePage, deletePage, activePageId } = useSettings();
   const [editingId, setEditingId] = useState(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null); // Safety state
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  
+  // Track page count for auto-navigation
+  const prevCount = useRef(pages.length);
 
+  // --- 1. HANDLE NEW PAGE CREATION ---
   const handleAdd = () => {
-    addPage('New Page', 'General');
+    // Attempt to pass the "Nice Layout" directly to addPage
+    addPage('New Page', 'General', {
+      layouts: INITIAL_LAYOUTS,
+      widgets: INITIAL_WIDGETS
+    });
   };
 
+  // --- 2. AUTO-OPEN NEW PAGES & SAFETY CHECK ---
+  useEffect(() => {
+    if (pages.length > prevCount.current) {
+      const newPage = pages[pages.length - 1];
+      if (newPage) {
+        setEditingId(newPage.id);
+
+        // Safety Net: If addPage didn't accept the 3rd arg, patch it now.
+        const hasLayouts = newPage.layouts && Object.keys(newPage.layouts).length > 0;
+        if (!hasLayouts) {
+           updatePage(newPage.id, { 
+             layouts: INITIAL_LAYOUTS, 
+             widgets: INITIAL_WIDGETS 
+           });
+        }
+      }
+    }
+    prevCount.current = pages.length;
+  }, [pages, updatePage]);
+
+  // --- 3. DELETE LOGIC ---
   const confirmDelete = () => {
     if (deleteConfirmId) {
       deletePage(deleteConfirmId);
@@ -49,67 +59,21 @@ const PageSettings = () => {
     }
   };
 
-  const PageEditor = ({ pageId }) => {
-    const page = pages.find(p => p.id === pageId);
-    if (!page) return null;
-
-    const handleUpdate = (field, value) => updatePage(pageId, { [field]: value });
-    const toggleWidget = (key) => updatePage(pageId, { widgets: { ...page.widgets, [key]: !page.widgets[key] } });
-
-    return (
-      <Box sx={{ animation: 'fadeIn 0.3s ease' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <IconButton onClick={() => setEditingId(null)} size="small" sx={{ bgcolor: 'action.hover' }}>
-            <ArrowBackRoundedIcon fontSize="small" />
-          </IconButton>
-          <Typography variant="subtitle1" fontWeight={700}>Editing "{page.name}"</Typography>
-        </Box>
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <Box>
-            <TextField label="Page Name" value={page.name} onChange={(e) => handleUpdate('name', e.target.value)} size="small" fullWidth sx={{ mb: 2 }} />
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>Icon</Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {ICONS.map((item) => (
-                <IconButton
-                  key={item.id}
-                  onClick={() => handleUpdate('icon', item.id)}
-                  sx={{
-                    bgcolor: page.icon === item.id ? 'primary.main' : 'action.hover',
-                    color: page.icon === item.id ? 'primary.contrastText' : 'text.secondary',
-                    '&:hover': { bgcolor: page.icon === item.id ? 'primary.dark' : 'action.selected' }
-                  }}
-                >
-                  {item.icon}
-                </IconButton>
-              ))}
-            </Box>
-          </Box>
-          <Divider />
-          <Box>
-            <Typography variant="subtitle2" gutterBottom>Visible Widgets</Typography>
-            <FormGroup>
-              {['clock', 'weather', 'news', 'calendar', 'notes'].map(widget => (
-                <FormControlLabel key={widget} control={<Switch size="small" checked={page.widgets[widget]} onChange={() => toggleWidget(widget)} />} label={widget.charAt(0).toUpperCase() + widget.slice(1)} />
-              ))}
-            </FormGroup>
-          </Box>
-          <Divider />
-          <Button color="error" variant="outlined" startIcon={<DeleteOutlineRoundedIcon />} onClick={() => setDeleteConfirmId(page.id)} disabled={pages.length <= 1} fullWidth>
-            Delete Page
-          </Button>
-        </Box>
-      </Box>
-    );
-  };
-
+  // --- 4. RENDER: EDITOR VIEW ---
   if (editingId) return (
     <>
-      <PageEditor pageId={editingId} />
-      {/* Shared Delete Dialog */}
+      <PageEditor 
+        pageId={editingId} 
+        onBack={() => setEditingId(null)} 
+        onDeleteRequest={setDeleteConfirmId} 
+      />
+      
+      {/* Delete Dialog (Shared) */}
       <Dialog open={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)}>
         <DialogTitle>Delete Page?</DialogTitle>
-        <DialogContent><DialogContentText>Are you sure you want to delete this page? This cannot be undone.</DialogContentText></DialogContent>
+        <DialogContent>
+          <DialogContentText>Are you sure you want to delete this page? This cannot be undone.</DialogContentText>
+        </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
           <Button onClick={confirmDelete} color="error" variant="contained" disableElevation>Delete</Button>
@@ -118,6 +82,7 @@ const PageSettings = () => {
     </>
   );
 
+  // --- 5. RENDER: LIST VIEW ---
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>

@@ -26,9 +26,20 @@ A personal home dashboard application built with React, Material UI, and Vite. D
 
 ```text
 my-dashboard
+├── .env
+├── .gitignore
+├── README.md
+├── eslint.config.js
+├── index.html
+├── mychanges.txt
+├── package-lock.json
+├── package.json
+├── password.md
 ├── public/
 │   └── vite.svg
 ├── src/
+│   ├── App.css
+│   ├── App.jsx
 │   ├── assets/
 │   │   └── react.svg
 │   ├── components/
@@ -38,6 +49,10 @@ my-dashboard
 │   │   ├── auth/
 │   │   │   └── PinPad.jsx
 │   │   └── dashboard/
+│   │       ├── Dashboard.jsx
+│   │       ├── NavigationRail.jsx
+│   │       ├── SettingsPanel.jsx
+│   │       ├── TutorialDialog.jsx
 │   │       ├── services/
 │   │       │   ├── nprService.js
 │   │       │   └── stations.js
@@ -47,38 +62,28 @@ my-dashboard
 │   │       │   ├── ClockSettings.jsx
 │   │       │   ├── GeneralSettings.jsx
 │   │       │   ├── InstallAppSection.jsx
+│   │       │   ├── PageSettings.jsx
 │   │       │   ├── SearchOverlay.jsx
 │   │       │   └── WeatherSettings.jsx
-│   │       ├── widgets/
-│   │       │   ├── components/
-│   │       │   │   ├── LiveVisualizer.jsx
-│   │       │   │   ├── NewsLogo.jsx
-│   │       │   │   ├── SourcePicker.jsx
-│   │       │   │   └── Waveform.jsx
-│   │       │   ├── CalendarWidget.jsx
-│   │       │   ├── ClockWidget.jsx
-│   │       │   ├── NewsWidget.jsx
-│   │       │   ├── NotesWidget.jsx
-│   │       │   └── WeatherWidget.jsx
-│   │       ├── Dashboard.jsx
-│   │       ├── SettingsPanel.jsx
-│   │       └── TutorialDialog.jsx
+│   │       └── widgets/
+│   │           ├── CalendarWidget.jsx
+│   │           ├── ClockWidget.jsx
+│   │           ├── NewsWidget.jsx
+│   │           ├── NotesWidget.jsx
+│   │           ├── WeatherWidget.jsx
+│   │           └── components/
+│   │               ├── LiveVisualizer.jsx
+│   │               ├── NewsLogo.jsx
+│   │               ├── SourcePicker.jsx
+│   │               ├── TableBlock.jsx
+│   │               ├── TextBlock.jsx
+│   │               └── Waveform.jsx
 │   ├── hooks/
 │   │   ├── useLocalStorage.js
 │   │   └── useNewsPlayer.js
-│   ├── App.css
-│   ├── App.jsx
 │   ├── index.css
 │   ├── main.jsx
 │   └── theme.js
-├── .env
-├── .gitignore
-├── eslint.config.js
-├── index.html
-├── package-lock.json
-├── package.json
-├── password.md
-├── README.md
 ├── tailwind.config.js
 └── vite.config.js
 ```
