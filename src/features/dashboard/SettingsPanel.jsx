@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Divider, 
-  Typography, Accordion, AccordionSummary, AccordionDetails 
+  Typography, Collapse, Paper 
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useSettings } from '../../context/SettingsContext';
 
 // Components
@@ -17,6 +18,39 @@ import ClockSettings from './settings/ClockSettings';
 import WeatherSettings from './settings/WeatherSettings';
 import CalendarSettings from './settings/CalendarSettings';
 
+// Clean Expandable Item Component
+// FIX: Changed borderRadius from 3 to '16px' to prevent Pill shape
+const SettingItem = ({ title, children, isOpen, onToggle }) => (
+  <Paper 
+    elevation={0} 
+    sx={{ 
+      border: '1px solid', 
+      borderColor: 'divider', 
+      borderRadius: '16px', // FIXED
+      overflow: 'hidden', 
+      mb: 1 
+    }}
+  >
+    <Box 
+      onClick={onToggle}
+      sx={{ 
+        p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+        cursor: 'pointer', bgcolor: isOpen ? 'action.hover' : 'transparent',
+        transition: '0.2s'
+      }}
+    >
+      <Typography fontWeight={600}>{title}</Typography>
+      <ExpandMoreIcon sx={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.3s' }} />
+    </Box>
+    <Collapse in={isOpen}>
+      <Box sx={{ p: 2, pt: 0 }}>
+        <Divider sx={{ mb: 2 }} />
+        {children}
+      </Box>
+    </Collapse>
+  </Paper>
+);
+
 const SettingsPanel = ({ open, onClose }) => {
   const settings = useSettings();
   const [tempCalUrl, setTempCalUrl] = useState(settings.calendarUrl);
@@ -26,6 +60,13 @@ const SettingsPanel = ({ open, onClose }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchMode, setSearchMode] = useState(null); 
+  
+  // UI State for expanded sections
+  const [expandedSection, setExpandedSection] = useState(null);
+
+  const handleToggle = (section) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
 
   const handleSearch = async () => {
     if (!searchTerm) return;
@@ -59,11 +100,6 @@ const SettingsPanel = ({ open, onClose }) => {
     onClose();
   };
 
-  const handleReplayTutorial = () => {
-    settings.setTutorialSeen(false); 
-    onClose(); 
-  };
-
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
       <DialogTitle sx={{ fontWeight: 'bold' }}>Dashboard Settings</DialogTitle>
@@ -71,7 +107,6 @@ const SettingsPanel = ({ open, onClose }) => {
       <DialogContent sx={{ px: 2 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
           
-          {/* SEARCH OVERLAY */}
           <SearchOverlay 
             mode={searchMode}
             searchTerm={searchTerm}
@@ -85,49 +120,44 @@ const SettingsPanel = ({ open, onClose }) => {
 
           {!searchMode && (
             <>
-              {/* 1. APP CONFIG (Pages & Theme) */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <InstallAppSection />
-                <PageSettings />
-                <GeneralSettings onReplayTutorial={handleReplayTutorial} />
-              </Box>
-
+              <InstallAppSection />
+              
+              <PageSettings />
+              
               <Divider />
+              
+              <GeneralSettings onReplayTutorial={() => { settings.setTutorialSeen(false); onClose(); }} />
 
-              {/* 2. SPECIFIC WIDGET CONFIGURATION (Accordions) */}
               <Box>
-                <Typography variant="h6" color="primary" sx={{ mb: 1 }}>Widget Configuration</Typography>
+                <Typography variant="h6" color="primary" sx={{ mb: 2 }}>Widget Configuration</Typography>
                 
-                <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 1, overflow: 'hidden' }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography fontWeight={600}>Weather</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <WeatherSettings onSearchRequest={setSearchMode} />
-                  </AccordionDetails>
-                </Accordion>
+                <SettingItem 
+                  title="Weather" 
+                  isOpen={expandedSection === 'weather'} 
+                  onToggle={() => handleToggle('weather')}
+                >
+                  <WeatherSettings onSearchRequest={setSearchMode} />
+                </SettingItem>
 
-                <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 1, overflow: 'hidden' }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography fontWeight={600}>World Clocks</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <ClockSettings onSearchRequest={setSearchMode} />
-                  </AccordionDetails>
-                </Accordion>
+                <SettingItem 
+                  title="World Clocks" 
+                  isOpen={expandedSection === 'clocks'} 
+                  onToggle={() => handleToggle('clocks')}
+                >
+                  <ClockSettings onSearchRequest={setSearchMode} />
+                </SettingItem>
 
-                <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 1, overflow: 'hidden' }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography fontWeight={600}>Google Calendar</Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <CalendarSettings onUrlChange={setTempCalUrl} />
-                  </AccordionDetails>
-                </Accordion>
+                <SettingItem 
+                  title="Google Calendar" 
+                  isOpen={expandedSection === 'calendar'} 
+                  onToggle={() => handleToggle('calendar')}
+                >
+                  <CalendarSettings onUrlChange={setTempCalUrl} />
+                </SettingItem>
               </Box>
 
               <Box sx={{ textAlign: 'center', mt: 2, opacity: 0.5 }}>
-                <Typography variant="caption">Version: 0.9.0</Typography>
+                <Typography variant="caption">Version: 0.9.5</Typography>
               </Box>
             </>
           )}

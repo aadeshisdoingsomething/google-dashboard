@@ -4,7 +4,6 @@ import { InputBase } from '@mui/material';
 const TextBlock = ({ block, updateBlock }) => {
   const textAreaRef = useRef(null);
 
-  // Auto-grow
   useEffect(() => {
     if (textAreaRef.current) {
       textAreaRef.current.style.height = 'auto';
@@ -19,16 +18,15 @@ const TextBlock = ({ block, updateBlock }) => {
       fullWidth
       value={block.content}
       onChange={(e) => updateBlock(block.id, { content: e.target.value })}
-      placeholder="Type something..."
+      placeholder="Type here..."
       sx={{ 
         fontSize: '1.1rem', 
         fontFamily: '"Google Sans", sans-serif',
         color: 'text.primary',
         lineHeight: 1.6,
-        p: 1,
-        borderRadius: 2,
-        border: '1px solid transparent',
-        '&:focus-within': { bgcolor: 'action.hover', borderColor: 'divider' } 
+        p: 0.5, 
+        // Removed borders and background focus for a clean "Doc" feel
+        '& textarea': { padding: 0 }
       }}
     />
   );

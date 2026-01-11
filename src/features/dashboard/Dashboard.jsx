@@ -24,14 +24,19 @@ import useLocalStorage from '../../hooks/useLocalStorage';
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 // --- DEFAULT LAYOUTS ---
-// (Used for migration/reset only now)
+// (Used for initial migration or reset)
 const defaultLayouts = {
   lg: [
+    // Left Column
     { i: 'news', x: 0, y: 0, w: 6, h: 3 }, 
     { i: 'clock', x: 0, y: 3, w: 6, h: 7 },
     { i: 'weather', x: 0, y: 10, w: 6, h: 8 },
+    
+    // Right Column
     { i: 'calendar', x: 6, y: 0, w: 6, h: 11 },
-    { i: 'notes', x: 0, y: 18, w: 12, h: 10 },
+    
+    // Bottom Half Width
+    { i: 'notes', x: 0, y: 18, w: 6, h: 7 },
   ],
   md: [
     { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
@@ -50,6 +55,7 @@ const defaultLayouts = {
 };
 
 // --- OPTIMIZED RESIZE HANDLE ---
+// Defined outside component to prevent re-mounting issues which cause drag lag
 const CustomResizeHandle = React.forwardRef((props, ref) => {
   const { handleAxis, ...restProps } = props;
   const theme = useTheme();
@@ -60,13 +66,26 @@ const CustomResizeHandle = React.forwardRef((props, ref) => {
       className={`react-resizable-handle react-resizable-handle-${handleAxis}`}
       {...restProps}
       sx={{
-        position: 'absolute', bottom: 0, right: 0,
-        width: '50px !important', height: '50px !important',
-        cursor: 'se-resize', zIndex: 50,
-        touchAction: 'none', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
-        padding: '8px', opacity: 0.6, transition: 'opacity 0.2s',
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        // Large touch target (38px) for mobile ease
+        width: '38px !important', 
+        height: '38px !important',
+        cursor: 'se-resize',
+        zIndex: 38,
+        touchAction: 'none', // Prevents scrolling on mobile while resizing
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'flex-end',
+        padding: '8px', 
+        opacity: 0.6,
+        transition: 'opacity 0.2s',
+        // Visual corner indicator
         '&::after': {
-          content: '""', width: '12px', height: '12px',
+          content: '""',
+          width: '12px',
+          height: '12px',
           borderRight: `4px solid ${theme.palette.text.secondary}`,
           borderBottom: `4px solid ${theme.palette.text.secondary}`,
           borderBottomRightRadius: '4px'
@@ -81,20 +100,18 @@ const CustomResizeHandle = React.forwardRef((props, ref) => {
 const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   
-  // NOTE: Ensure key matches your Context migration logic if needed, 
-  // but Dashboard doesn't manage global layouts anymore, it reads from activePage.
-  // We keep this here just in case you haven't fully migrated Context yet, 
-  // but the code below uses 'activePage.layouts'.
+  // Storage for layouts (mostly handled by Context now, but good to have local reference)
+  const [layouts, setLayouts] = useLocalStorage('dashboard_layouts_v7', defaultLayouts);
   
-  // Get Page Data from Context
+  // Get Page Data from Context (The "Brain")
   const { 
     activePage, 
     pages, 
-    setActivePageId, // FIX: Corrected name (was setActivePage)
+    setActivePageId, 
     updatePage 
   } = useSettings();
 
-  // Safety Check
+  // Safety Check: Wait for migration/loading
   if (!activePage) {
     return (
       <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -103,7 +120,7 @@ const Dashboard = () => {
     );
   }
 
-  // Handle Layout Changes
+  // Handle Layout Changes (Save directly to the active page configuration)
   const handleLayoutChange = (currentLayout, allLayouts) => {
     updatePage(activePage.id, { layouts: allLayouts });
   };
@@ -127,13 +144,16 @@ const Dashboard = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: 'background.default', color: 'text.primary' }}>
+    <Box sx={{ p: 2, minHeight: '100vh', width: '100vw', bgcolor: 'background.default', color: 'text.primary' }}>
       
+      {/* GLOBAL TUTORIAL (With callback to open settings) */}
+      <TutorialDialog onOpenSettings={() => setSettingsOpen(true)} />
+
       {/* 1. Navigation Rail (Left) */}
       <NavigationRail 
         pages={pages} 
         activePageId={activePage.id} 
-        onSwitchPage={setActivePageId} // FIX: Pass the corrected function
+        onSwitchPage={setActivePageId} 
         onOpenSettings={() => setSettingsOpen(true)}
       />
 
@@ -146,9 +166,13 @@ const Dashboard = () => {
         p: 2,
         transition: 'all 0.3s ease'
       }}>
-        
-        {/* GLOBAL TUTORIAL */}
-        <TutorialDialog />
+
+        {/* Top Right Settings Button (Redundant but keeps accessibility high) */}
+        <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 1000 }}>
+          <IconButton onClick={() => setSettingsOpen(true)} sx={{ bgcolor: 'background.paper' }}>
+            <SettingsIcon />
+          </IconButton>
+        </Box>
 
         <ResponsiveGridLayout
           className="layout"
@@ -162,7 +186,7 @@ const Dashboard = () => {
           resizeHandles={['se']}
           resizeHandle={<CustomResizeHandle />}
         >
-          {/* WIDGETS: Check activePage.widgets.[name] */}
+          {/* WIDGETS: Render based on Active Page configuration */}
 
           {activePage.widgets.clock && (
             <Paper key="clock" sx={paperStyle}>
