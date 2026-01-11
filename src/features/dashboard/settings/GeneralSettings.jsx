@@ -9,7 +9,8 @@ const GeneralSettings = () => {
     showWidgetClock, setShowWidgetClock,
     showWidgetWeather, setShowWidgetWeather,
     showWidgetCalendar, setShowWidgetCalendar,
-    showWidgetNews, setShowWidgetNews // New
+    showWidgetNews, setShowWidgetNews,
+    showWidgetNotes, setShowWidgetNotes // New
   } = useSettings();
 
   return (
@@ -35,8 +36,9 @@ const GeneralSettings = () => {
       <FormGroup row>
         <FormControlLabel control={<Switch checked={showWidgetClock} onChange={(e) => setShowWidgetClock(e.target.checked)} />} label="Clock" />
         <FormControlLabel control={<Switch checked={showWidgetWeather} onChange={(e) => setShowWidgetWeather(e.target.checked)} />} label="Weather" />
-        <FormControlLabel control={<Switch checked={showWidgetCalendar} onChange={(e) => setShowWidgetCalendar(e.target.checked)} />} label="Calendar" />
         <FormControlLabel control={<Switch checked={showWidgetNews} onChange={(e) => setShowWidgetNews(e.target.checked)} />} label="News" />
+        <FormControlLabel control={<Switch checked={showWidgetNotes} onChange={(e) => setShowWidgetNotes(e.target.checked)} />} label="Notes" />
+        <FormControlLabel control={<Switch checked={showWidgetCalendar} onChange={(e) => setShowWidgetCalendar(e.target.checked)} />} label="Calendar" />
       </FormGroup>
     </Box>
   );

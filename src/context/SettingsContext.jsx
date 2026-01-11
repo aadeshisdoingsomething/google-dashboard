@@ -9,8 +9,6 @@ export const SettingsProvider = ({ children }) => {
   // --- General ---
   const [themeMode, setThemeMode] = useLocalStorage('app_theme_mode', 'dark');
   const [effectiveTheme, setEffectiveTheme] = useState('dark');
-  
-  // NEW: Tutorial State
   const [tutorialSeen, setTutorialSeen] = useLocalStorage('app_tutorial_seen_v1', false);
 
   // --- Widget Visibility ---
@@ -18,6 +16,13 @@ export const SettingsProvider = ({ children }) => {
   const [showWidgetWeather, setShowWidgetWeather] = useLocalStorage('app_show_weather', true);
   const [showWidgetCalendar, setShowWidgetCalendar] = useLocalStorage('app_show_calendar', true);
   const [showWidgetNews, setShowWidgetNews] = useLocalStorage('app_show_news', true);
+  const [showWidgetNotes, setShowWidgetNotes] = useLocalStorage('app_show_notes', true);
+
+  // --- Notes Data (NEW BLOCK STRUCTURE) ---
+  // A list of objects: { id, type: 'text'|'table', content: ... }
+  const [notesBlocks, setNotesBlocks] = useLocalStorage('app_notes_blocks_v2', [
+    { id: 'init_text', type: 'text', content: "Kitchen Notes...\n\n- Buy vanilla\n- Check oven at 4pm" }
+  ]);
 
   // --- Clock Settings ---
   const [timeFormat, setTimeFormat] = useLocalStorage('app_time_format', '12h');
@@ -52,12 +57,15 @@ export const SettingsProvider = ({ children }) => {
 
   const value = {
     themeMode, setThemeMode, effectiveTheme,
-    tutorialSeen, setTutorialSeen, // Exported
+    tutorialSeen, setTutorialSeen,
     // Visibility
     showWidgetClock, setShowWidgetClock,
     showWidgetWeather, setShowWidgetWeather,
     showWidgetCalendar, setShowWidgetCalendar,
     showWidgetNews, setShowWidgetNews,
+    showWidgetNotes, setShowWidgetNotes,
+    // Notes Data
+    notesBlocks, setNotesBlocks, // New Block State
     // Clock
     timeFormat, setTimeFormat,
     worldClock1, setWorldClock1,

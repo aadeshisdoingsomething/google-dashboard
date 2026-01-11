@@ -5,54 +5,85 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
+// Widgets
 import ClockWidget from './widgets/ClockWidget';
 import WeatherWidget from './widgets/WeatherWidget';
 import CalendarWidget from './widgets/CalendarWidget';
 import NewsWidget from './widgets/NewsWidget';
+import NotesWidget from './widgets/NotesWidget';
+
+// Components
 import SettingsPanel from './SettingsPanel';
-import TutorialDialog from './TutorialDialog'; // NEW IMPORT
+import TutorialDialog from './TutorialDialog';
+
+// Hooks & Context
 import { useSettings } from '../../context/SettingsContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
+// --- DEFAULT LAYOUTS ---
 const defaultLayouts = {
   lg: [
-    { i: 'clock', x: 0, y: 3, w: 6, h: 7 },
-    { i: 'weather', x: 0, y: 9, w: 6, h: 8 },
-    { i: 'calendar', x: 6, y: 0, w: 6, h: 18 },
+    // Left Column
     { i: 'news', x: 0, y: 0, w: 6, h: 3 }, 
+    { i: 'clock', x: 0, y: 3, w: 6, h: 7 },
+    { i: 'weather', x: 0, y: 10, w: 6, h: 8 },
+    
+    // Right Column (Calendar shortened as requested)
+    { i: 'calendar', x: 6, y: 0, w: 6, h: 11 },
+    
+    // Bottom Full Width
+    { i: 'notes', x: 0, y: 18, w: 6, h: 7 },
   ],
   md: [
     { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
     { i: 'weather', x: 6, y: 0, w: 6, h: 8 },
     { i: 'calendar', x: 0, y: 8, w: 12, h: 14 },
     { i: 'news', x: 0, y: 22, w: 12, h: 3 },
+    { i: 'notes', x: 0, y: 25, w: 12, h: 10 },
   ],
   sm: [
     { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
     { i: 'weather', x: 0, y: 8, w: 6, h: 8 },
     { i: 'news', x: 0, y: 16, w: 6, h: 3 }, 
     { i: 'calendar', x: 0, y: 19, w: 6, h: 12 },
+    { i: 'notes', x: 0, y: 31, w: 6, h: 10 },
   ]
 };
 
-// ... (Keep CustomResizeHandle definition here exactly as before) ...
+// --- OPTIMIZED RESIZE HANDLE ---
+// Defined outside component to prevent re-mounting issues
 const CustomResizeHandle = React.forwardRef((props, ref) => {
   const { handleAxis, ...restProps } = props;
   const theme = useTheme();
+
   return (
     <Box
       ref={ref}
       className={`react-resizable-handle react-resizable-handle-${handleAxis}`}
       {...restProps}
       sx={{
-        position: 'absolute', bottom: 0, right: 0,
-        width: '50px !important', height: '50px !important', cursor: 'se-resize', zIndex: 50,
-        touchAction: 'none', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
-        padding: '8px', opacity: 0.6, transition: 'opacity 0.2s',
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        // Large touch target for mobile
+        width: '50px !important', 
+        height: '50px !important',
+        cursor: 'se-resize',
+        zIndex: 50,
+        touchAction: 'none', // Prevents scrolling on mobile while resizing
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'flex-end',
+        padding: '8px', 
+        opacity: 0.6,
+        transition: 'opacity 0.2s',
+        // Visual corner indicator
         '&::after': {
-          content: '""', width: '12px', height: '12px',
+          content: '""',
+          width: '12px',
+          height: '12px',
           borderRight: `4px solid ${theme.palette.text.secondary}`,
           borderBottom: `4px solid ${theme.palette.text.secondary}`,
           borderBottomRightRadius: '4px'
@@ -67,9 +98,14 @@ const CustomResizeHandle = React.forwardRef((props, ref) => {
 const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   
-  const [layouts, setLayouts] = useLocalStorage('dashboard_layouts_v5', defaultLayouts);
+  // NOTE: Key changed to 'v7' to apply your new calendar layout
+  const [layouts, setLayouts] = useLocalStorage('dashboard_layouts_v7', defaultLayouts);
   
-  const { showWidgetClock, showWidgetWeather, showWidgetCalendar, showWidgetNews } = useSettings();
+  const { 
+    showWidgetClock, showWidgetWeather, 
+    showWidgetCalendar, showWidgetNews, 
+    showWidgetNotes 
+  } = useSettings();
 
   const getVisibleLayouts = () => {
     const visibleLayouts = {};
@@ -79,6 +115,7 @@ const Dashboard = () => {
         if (item.i === 'weather' && !showWidgetWeather) return false;
         if (item.i === 'calendar' && !showWidgetCalendar) return false;
         if (item.i === 'news' && !showWidgetNews) return false;
+        if (item.i === 'notes' && !showWidgetNotes) return false;
         return true;
       });
     });
@@ -123,15 +160,17 @@ const Dashboard = () => {
   return (
     <Box sx={{ p: 2, minHeight: '100vh', width: '100vw', bgcolor: 'background.default', color: 'text.primary' }}>
       
-      {/* GLOBAL TUTORIAL DIALOG */}
+      {/* GLOBAL TUTORIAL */}
       <TutorialDialog />
 
+      {/* SETTINGS BUTTON */}
       <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 1000 }}>
         <IconButton onClick={() => setSettingsOpen(true)} sx={{ bgcolor: 'background.paper' }}>
           <SettingsIcon />
         </IconButton>
       </Box>
 
+      {/* GRID LAYOUT */}
       <ResponsiveGridLayout
         className="layout"
         layouts={getVisibleLayouts()}
@@ -172,6 +211,15 @@ const Dashboard = () => {
             <DragHandle />
             <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
               <NewsWidget />
+            </Box>
+          </Paper>
+        )}
+
+        {showWidgetNotes && (
+          <Paper key="notes" sx={paperStyle}>
+            <DragHandle />
+            <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+              <NotesWidget />
             </Box>
           </Paper>
         )}
