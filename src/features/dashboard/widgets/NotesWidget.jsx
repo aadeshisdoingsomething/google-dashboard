@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Box, IconButton, InputBase, Fab, useTheme, Fade, Stack, Tooltip, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, IconButton, Fab, useTheme, Fade, Stack, Tooltip, Typography } from '@mui/material';
 import TableViewRoundedIcon from '@mui/icons-material/TableViewRounded';
 import TextFieldsRoundedIcon from '@mui/icons-material/TextFieldsRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -9,99 +9,9 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloudDoneRoundedIcon from '@mui/icons-material/CloudDoneRounded';
 import { useSettings } from '../../../context/SettingsContext';
 
-// --- SUB-COMPONENTS ---
-
-// 1. TEXT BLOCK
-const TextBlock = ({ block, updateBlock }) => {
-  const textAreaRef = useRef(null);
-
-  // Auto-grow
-  useEffect(() => {
-    if (textAreaRef.current) {
-      textAreaRef.current.style.height = 'auto';
-      textAreaRef.current.style.height = textAreaRef.current.scrollHeight + 'px';
-    }
-  }, [block.content]);
-
-  return (
-    <InputBase
-      inputRef={textAreaRef}
-      multiline
-      fullWidth
-      value={block.content}
-      onChange={(e) => updateBlock(block.id, { content: e.target.value })}
-      placeholder="Type something..."
-      sx={{ 
-        fontSize: '1.1rem', 
-        fontFamily: '"Google Sans", sans-serif',
-        color: 'text.primary',
-        lineHeight: 1.6,
-        p: 1,
-        borderRadius: 2,
-        border: '1px solid transparent',
-        '&:focus-within': { bgcolor: 'action.hover', borderColor: 'divider' } 
-      }}
-    />
-  );
-};
-
-// 2. TABLE BLOCK
-const TableBlock = ({ block, updateBlock }) => {
-  const theme = useTheme();
-
-  const updateCell = (rowId, col, value) => {
-    const newRows = block.rows.map(r => r.id === rowId ? { ...r, [col]: value } : r);
-    updateBlock(block.id, { rows: newRows });
-  };
-
-  const addRow = () => {
-    updateBlock(block.id, { rows: [...block.rows, { id: Date.now(), c1: '', c2: '' }] });
-  };
-
-  return (
-    <Box sx={{ 
-      border: `1px solid ${theme.palette.divider}`,
-      borderRadius: '12px',
-      bgcolor: 'transparent',
-      overflow: 'hidden',
-      my: 2 
-    }}>
-      {/* Rows */}
-      <Box sx={{ width: '100%' }}>
-        {block.rows.map((row) => (
-          <Box key={row.id} sx={{ display: 'flex', borderBottom: `1px solid ${theme.palette.divider}` }}>
-            <InputBase 
-              value={row.c1} 
-              onChange={(e) => updateCell(row.id, 'c1', e.target.value)}
-              placeholder="..."
-              sx={{ flex: 1, p: 1.5, borderRight: `1px solid ${theme.palette.divider}`, fontSize: '0.95rem' }} 
-            />
-            <InputBase 
-              value={row.c2} 
-              onChange={(e) => updateCell(row.id, 'c2', e.target.value)}
-              placeholder="..."
-              sx={{ flex: 1, p: 1.5, fontSize: '0.95rem' }} 
-            />
-          </Box>
-        ))}
-      </Box>
-      {/* Footer Add Row */}
-      <IconButton 
-        onClick={addRow} 
-        fullWidth 
-        sx={{ 
-          borderRadius: 0, py: 1, fontSize: '0.75rem', fontWeight: 700, 
-          letterSpacing: '1px', textTransform: 'uppercase', color: 'text.secondary',
-          '&:hover': { bgcolor: 'action.hover' }
-        }}
-      >
-        <AddRoundedIcon sx={{ fontSize: 16, mr: 1 }} /> Add Row
-      </IconButton>
-    </Box>
-  );
-};
-
-// --- MAIN WIDGET ---
+// Import sub-components
+import TextBlock from './components/TextBlock';
+import TableBlock from './components/TableBlock';
 
 const NotesWidget = () => {
   const theme = useTheme();
@@ -179,8 +89,8 @@ const NotesWidget = () => {
                 sx={{ 
                   bgcolor: 'background.paper', 
                   boxShadow: 1, 
-                  width: 32, height: 32, // Larger touch target
-                  opacity: index === 0 ? 0 : 1, // Visually hide if disabled
+                  width: 32, height: 32,
+                  opacity: index === 0 ? 0 : 1,
                   border: `1px solid ${theme.palette.divider}`
                 }}
               >

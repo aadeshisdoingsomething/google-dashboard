@@ -3,7 +3,6 @@ import { Box, Typography, Button, useTheme, Stack } from '@mui/material';
 import { useSettings } from '../../../context/SettingsContext';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-// Import the instructions dialog (going back up to settings folder)
 import CalendarHelpDialog from '../settings/CalendarHelpDialog';
 
 const CalendarWidget = ({ onOpenSettings }) => {
@@ -11,10 +10,7 @@ const CalendarWidget = ({ onOpenSettings }) => {
   const theme = useTheme();
   const [helpOpen, setHelpOpen] = useState(false);
 
-  // THE PERFECT FILTER
-  // 1. invert(0.92): Turns White (255) -> ~#141414 (Your Dark Card Color).
-  // 2. hue-rotate(180deg): Fixes the buttons to be Blue again.
-  // 3. saturate(0.85): Removes just enough color noise.
+  // CSS Filter handles the Dark Mode look visually without changing the URL
   const iframeStyle = {
     border: 0, 
     width: '100%', 
@@ -24,6 +20,7 @@ const CalendarWidget = ({ onOpenSettings }) => {
       : 'none',
   };
 
+  // Generate the URL only when calendarUrl changes, NOT when theme changes.
   const optimizedUrl = useMemo(() => {
     if (!calendarUrl) return '';
 
@@ -33,25 +30,23 @@ const CalendarWidget = ({ onOpenSettings }) => {
       // 1. CLEANUP PARAMS
       urlObj.searchParams.set('showTitle', '0');
       urlObj.searchParams.set('showPrint', '0');
-      urlObj.searchParams.set('showTabs', '1'); // Kept as requested
+      urlObj.searchParams.set('showTabs', '1');
       urlObj.searchParams.set('showCalendars', '0');
       urlObj.searchParams.set('showTz', '0');
       urlObj.searchParams.set('showNav', '1'); 
       urlObj.searchParams.set('showDate', '1');
 
-      // 2. COLOR MATH
-      if (theme.palette.mode === 'dark') {
-        urlObj.searchParams.set('bgcolor', '#f5f5f5');
-      } else {
-        urlObj.searchParams.set('bgcolor', '#f9fafd');
-      }
+      // 2. STABLE BG COLOR
+      // We lock this to white so the URL doesn't change during theme toggles.
+      // This prevents the iframe from reloading and resetting your view (Week/Day/etc).
+      urlObj.searchParams.set('bgcolor', '#ffffff');
 
       return urlObj.toString();
     } catch (e) {
       console.error('Error parsing Calendar URL:', e);
       return calendarUrl;
     }
-  }, [calendarUrl, theme.palette.mode]);
+  }, [calendarUrl]); // Removed theme.palette.mode dependency
 
   if (!calendarUrl) {
     return (
