@@ -1,27 +1,32 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Divider, Typography } from '@mui/material';
+import { 
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Divider, 
+  Typography, Accordion, AccordionSummary, AccordionDetails 
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useSettings } from '../../context/SettingsContext';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
-// Import sub-components
+// Components
 import SearchOverlay from './settings/SearchOverlay';
+import PageSettings from './settings/PageSettings';
 import GeneralSettings from './settings/GeneralSettings';
+import InstallAppSection from './settings/InstallAppSection';
+
+// Widget Settings
 import ClockSettings from './settings/ClockSettings';
 import WeatherSettings from './settings/WeatherSettings';
 import CalendarSettings from './settings/CalendarSettings';
-import InstallAppSection from './settings/InstallAppSection';
 
 const SettingsPanel = ({ open, onClose }) => {
   const settings = useSettings();
   const [tempCalUrl, setTempCalUrl] = useState(settings.calendarUrl);
   
-  // --- Search Logic State ---
+  // Search Logic
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchMode, setSearchMode] = useState(null); 
 
-  // --- Handlers ---
   const handleSearch = async () => {
     if (!searchTerm) return;
     setIsSearching(true);
@@ -55,17 +60,18 @@ const SettingsPanel = ({ open, onClose }) => {
   };
 
   const handleReplayTutorial = () => {
-    settings.setTutorialSeen(false); // Reset state
-    onClose(); // Close settings to see it
+    settings.setTutorialSeen(false); 
+    onClose(); 
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
       <DialogTitle sx={{ fontWeight: 'bold' }}>Dashboard Settings</DialogTitle>
-      <DialogContent>
+      
+      <DialogContent sx={{ px: 2 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
           
-          {/* 1. Search Overlay */}
+          {/* SEARCH OVERLAY */}
           <SearchOverlay 
             mode={searchMode}
             searchTerm={searchTerm}
@@ -77,30 +83,49 @@ const SettingsPanel = ({ open, onClose }) => {
             onCancel={() => setSearchMode(null)}
           />
 
-          {/* 2. Settings Modules */}
           {!searchMode && (
             <>
-              <InstallAppSection />
-              
-              <GeneralSettings />
-              
-              {/* Tutorial Replay Button */}
-              <Button 
-                startIcon={<HelpOutlineIcon />} 
-                onClick={handleReplayTutorial}
-                sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-              >
-                Replay Welcome Tutorial
-              </Button>
+              {/* 1. APP CONFIG (Pages & Theme) */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <InstallAppSection />
+                <PageSettings />
+                <GeneralSettings onReplayTutorial={handleReplayTutorial} />
+              </Box>
 
               <Divider />
-              <ClockSettings onSearchRequest={setSearchMode} />
-              <Divider />
-              <WeatherSettings onSearchRequest={setSearchMode} />
-              <Divider />
-              <CalendarSettings onUrlChange={setTempCalUrl} />
 
-              {/* Version Footer */}
+              {/* 2. SPECIFIC WIDGET CONFIGURATION (Accordions) */}
+              <Box>
+                <Typography variant="h6" color="primary" sx={{ mb: 1 }}>Widget Configuration</Typography>
+                
+                <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 1, overflow: 'hidden' }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography fontWeight={600}>Weather</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <WeatherSettings onSearchRequest={setSearchMode} />
+                  </AccordionDetails>
+                </Accordion>
+
+                <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 1, overflow: 'hidden' }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography fontWeight={600}>World Clocks</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <ClockSettings onSearchRequest={setSearchMode} />
+                  </AccordionDetails>
+                </Accordion>
+
+                <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' }, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 1, overflow: 'hidden' }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography fontWeight={600}>Google Calendar</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <CalendarSettings onUrlChange={setTempCalUrl} />
+                  </AccordionDetails>
+                </Accordion>
+              </Box>
+
               <Box sx={{ textAlign: 'center', mt: 2, opacity: 0.5 }}>
                 <Typography variant="caption">Version: 0.9.0</Typography>
               </Box>

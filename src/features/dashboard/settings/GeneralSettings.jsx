@@ -1,22 +1,18 @@
 import React from 'react';
-import { Box, Typography, FormControl, InputLabel, Select, MenuItem, FormGroup, FormControlLabel, Switch } from '@mui/material';
+import { Box, Typography, FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
 import { useSettings } from '../../../context/SettingsContext';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
-const GeneralSettings = () => {
-  const { 
-    themeMode, setThemeMode, 
-    timeFormat, setTimeFormat,
-    showWidgetClock, setShowWidgetClock,
-    showWidgetWeather, setShowWidgetWeather,
-    showWidgetCalendar, setShowWidgetCalendar,
-    showWidgetNews, setShowWidgetNews,
-    showWidgetNotes, setShowWidgetNotes // New
-  } = useSettings();
+const GeneralSettings = ({ onReplayTutorial }) => {
+  const { themeMode, setThemeMode, timeFormat, setTimeFormat } = useSettings();
 
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom color="primary">Visibility & Theme</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Typography variant="subtitle2" color="primary" fontWeight={700}>
+        Global Appearance
+      </Typography>
+      
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
         <FormControl fullWidth size="small">
           <InputLabel>Theme</InputLabel>
           <Select value={themeMode} label="Theme" onChange={(e) => setThemeMode(e.target.value)}>
@@ -25,6 +21,7 @@ const GeneralSettings = () => {
             <MenuItem value="auto">Auto</MenuItem>
           </Select>
         </FormControl>
+        
         <FormControl fullWidth size="small">
           <InputLabel>Time Format</InputLabel>
           <Select value={timeFormat} label="Time Format" onChange={(e) => setTimeFormat(e.target.value)}>
@@ -33,13 +30,15 @@ const GeneralSettings = () => {
           </Select>
         </FormControl>
       </Box>
-      <FormGroup row>
-        <FormControlLabel control={<Switch checked={showWidgetClock} onChange={(e) => setShowWidgetClock(e.target.checked)} />} label="Clock" />
-        <FormControlLabel control={<Switch checked={showWidgetWeather} onChange={(e) => setShowWidgetWeather(e.target.checked)} />} label="Weather" />
-        <FormControlLabel control={<Switch checked={showWidgetNews} onChange={(e) => setShowWidgetNews(e.target.checked)} />} label="News" />
-        <FormControlLabel control={<Switch checked={showWidgetNotes} onChange={(e) => setShowWidgetNotes(e.target.checked)} />} label="Notes" />
-        <FormControlLabel control={<Switch checked={showWidgetCalendar} onChange={(e) => setShowWidgetCalendar(e.target.checked)} />} label="Calendar" />
-      </FormGroup>
+
+      <Button 
+        startIcon={<HelpOutlineIcon />} 
+        onClick={onReplayTutorial}
+        size="small"
+        sx={{ justifyContent: 'flex-start', textTransform: 'none', color: 'text.secondary' }}
+      >
+        Replay Welcome Tutorial
+      </Button>
     </Box>
   );
 };

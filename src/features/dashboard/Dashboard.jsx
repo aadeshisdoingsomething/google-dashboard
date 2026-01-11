@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
-import { Box, Paper, IconButton, useTheme } from '@mui/material';
+import { Box, Paper, IconButton, useTheme, CircularProgress } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -15,6 +15,7 @@ import NotesWidget from './widgets/NotesWidget';
 // Components
 import SettingsPanel from './SettingsPanel';
 import TutorialDialog from './TutorialDialog';
+import NavigationRail from './NavigationRail';
 
 // Hooks & Context
 import { useSettings } from '../../context/SettingsContext';
@@ -23,18 +24,14 @@ import useLocalStorage from '../../hooks/useLocalStorage';
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 // --- DEFAULT LAYOUTS ---
+// (Used for migration/reset only now)
 const defaultLayouts = {
   lg: [
-    // Left Column
     { i: 'news', x: 0, y: 0, w: 6, h: 3 }, 
     { i: 'clock', x: 0, y: 3, w: 6, h: 7 },
     { i: 'weather', x: 0, y: 10, w: 6, h: 8 },
-    
-    // Right Column (Calendar shortened as requested)
     { i: 'calendar', x: 6, y: 0, w: 6, h: 11 },
-    
-    // Bottom Full Width
-    { i: 'notes', x: 0, y: 18, w: 6, h: 7 },
+    { i: 'notes', x: 0, y: 18, w: 12, h: 10 },
   ],
   md: [
     { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
@@ -53,7 +50,6 @@ const defaultLayouts = {
 };
 
 // --- OPTIMIZED RESIZE HANDLE ---
-// Defined outside component to prevent re-mounting issues
 const CustomResizeHandle = React.forwardRef((props, ref) => {
   const { handleAxis, ...restProps } = props;
   const theme = useTheme();
@@ -64,26 +60,13 @@ const CustomResizeHandle = React.forwardRef((props, ref) => {
       className={`react-resizable-handle react-resizable-handle-${handleAxis}`}
       {...restProps}
       sx={{
-        position: 'absolute',
-        bottom: 0,
-        right: 0,
-        // Large touch target for mobile
-        width: '50px !important', 
-        height: '50px !important',
-        cursor: 'se-resize',
-        zIndex: 50,
-        touchAction: 'none', // Prevents scrolling on mobile while resizing
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'flex-end',
-        padding: '8px', 
-        opacity: 0.6,
-        transition: 'opacity 0.2s',
-        // Visual corner indicator
+        position: 'absolute', bottom: 0, right: 0,
+        width: '50px !important', height: '50px !important',
+        cursor: 'se-resize', zIndex: 50,
+        touchAction: 'none', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end',
+        padding: '8px', opacity: 0.6, transition: 'opacity 0.2s',
         '&::after': {
-          content: '""',
-          width: '12px',
-          height: '12px',
+          content: '""', width: '12px', height: '12px',
           borderRight: `4px solid ${theme.palette.text.secondary}`,
           borderBottom: `4px solid ${theme.palette.text.secondary}`,
           borderBottomRightRadius: '4px'
@@ -98,45 +81,31 @@ const CustomResizeHandle = React.forwardRef((props, ref) => {
 const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   
-  // NOTE: Key changed to 'v7' to apply your new calendar layout
-  const [layouts, setLayouts] = useLocalStorage('dashboard_layouts_v7', defaultLayouts);
+  // NOTE: Ensure key matches your Context migration logic if needed, 
+  // but Dashboard doesn't manage global layouts anymore, it reads from activePage.
+  // We keep this here just in case you haven't fully migrated Context yet, 
+  // but the code below uses 'activePage.layouts'.
   
+  // Get Page Data from Context
   const { 
-    showWidgetClock, showWidgetWeather, 
-    showWidgetCalendar, showWidgetNews, 
-    showWidgetNotes 
+    activePage, 
+    pages, 
+    setActivePageId, // FIX: Corrected name (was setActivePage)
+    updatePage 
   } = useSettings();
 
-  const getVisibleLayouts = () => {
-    const visibleLayouts = {};
-    Object.keys(layouts).forEach(breakpoint => {
-      visibleLayouts[breakpoint] = layouts[breakpoint].filter(item => {
-        if (item.i === 'clock' && !showWidgetClock) return false;
-        if (item.i === 'weather' && !showWidgetWeather) return false;
-        if (item.i === 'calendar' && !showWidgetCalendar) return false;
-        if (item.i === 'news' && !showWidgetNews) return false;
-        if (item.i === 'notes' && !showWidgetNotes) return false;
-        return true;
-      });
-    });
-    return visibleLayouts;
-  };
+  // Safety Check
+  if (!activePage) {
+    return (
+      <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
+  // Handle Layout Changes
   const handleLayoutChange = (currentLayout, allLayouts) => {
-    setLayouts(prevLayouts => {
-      const newLayouts = { ...prevLayouts };
-      Object.keys(allLayouts).forEach(breakpoint => {
-         if (!newLayouts[breakpoint]) {
-            newLayouts[breakpoint] = allLayouts[breakpoint];
-            return;
-         }
-         newLayouts[breakpoint] = newLayouts[breakpoint].map(prevItem => {
-            const updatedItem = allLayouts[breakpoint].find(u => u.i === prevItem.i);
-            return updatedItem ? updatedItem : prevItem;
-         });
-      });
-      return newLayouts;
-    });
+    updatePage(activePage.id, { layouts: allLayouts });
   };
 
   const paperStyle = {
@@ -158,73 +127,86 @@ const Dashboard = () => {
   );
 
   return (
-    <Box sx={{ p: 2, minHeight: '100vh', width: '100vw', bgcolor: 'background.default', color: 'text.primary' }}>
+    <Box sx={{ minHeight: '100vh', width: '100vw', bgcolor: 'background.default', color: 'text.primary' }}>
       
-      {/* GLOBAL TUTORIAL */}
-      <TutorialDialog />
+      {/* 1. Navigation Rail (Left) */}
+      <NavigationRail 
+        pages={pages} 
+        activePageId={activePage.id} 
+        onSwitchPage={setActivePageId} // FIX: Pass the corrected function
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
 
-      {/* SETTINGS BUTTON */}
-      <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 1000 }}>
-        <IconButton onClick={() => setSettingsOpen(true)} sx={{ bgcolor: 'background.paper' }}>
-          <SettingsIcon />
-        </IconButton>
-      </Box>
-
-      {/* GRID LAYOUT */}
-      <ResponsiveGridLayout
-        className="layout"
-        layouts={getVisibleLayouts()}
-        onLayoutChange={handleLayoutChange}
-        breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-        cols={{ lg: 12, md: 12, sm: 6 }}
-        rowHeight={30}
-        margin={[16, 16]}
-        draggableHandle=".drag-handle"
-        resizeHandles={['se']}
-        resizeHandle={<CustomResizeHandle />}
-      >
-        {showWidgetClock && (
-          <Paper key="clock" sx={paperStyle}>
-            <DragHandle />
-            <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}><ClockWidget /></Box>
-          </Paper>
-        )}
-
-        {showWidgetWeather && (
-          <Paper key="weather" sx={paperStyle}>
-            <DragHandle />
-            <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}><WeatherWidget /></Box>
-          </Paper>
-        )}
-
-        {showWidgetCalendar && (
-          <Paper key="calendar" sx={paperStyle}>
-            <DragHandle />
-            <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-              <CalendarWidget onOpenSettings={() => setSettingsOpen(true)} />
-            </Box>
-          </Paper>
-        )}
+      {/* 2. Main Canvas (Shifted Right) */}
+      <Box sx={{ 
+        marginLeft: '80px', // Space for Rail
+        height: '100vh', 
+        overflowY: 'auto', 
+        overflowX: 'hidden',
+        p: 2,
+        transition: 'all 0.3s ease'
+      }}>
         
-        {showWidgetNews && (
-          <Paper key="news" sx={paperStyle}>
-            <DragHandle />
-            <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-              <NewsWidget />
-            </Box>
-          </Paper>
-        )}
+        {/* GLOBAL TUTORIAL */}
+        <TutorialDialog />
 
-        {showWidgetNotes && (
-          <Paper key="notes" sx={paperStyle}>
-            <DragHandle />
-            <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-              <NotesWidget />
-            </Box>
-          </Paper>
-        )}
+        <ResponsiveGridLayout
+          className="layout"
+          layouts={activePage.layouts} // READ from Page
+          onLayoutChange={handleLayoutChange} // WRITE to Page
+          breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+          cols={{ lg: 12, md: 12, sm: 6 }}
+          rowHeight={30}
+          margin={[16, 16]}
+          draggableHandle=".drag-handle"
+          resizeHandles={['se']}
+          resizeHandle={<CustomResizeHandle />}
+        >
+          {/* WIDGETS: Check activePage.widgets.[name] */}
 
-      </ResponsiveGridLayout>
+          {activePage.widgets.clock && (
+            <Paper key="clock" sx={paperStyle}>
+              <DragHandle />
+              <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}><ClockWidget /></Box>
+            </Paper>
+          )}
+
+          {activePage.widgets.weather && (
+            <Paper key="weather" sx={paperStyle}>
+              <DragHandle />
+              <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}><WeatherWidget /></Box>
+            </Paper>
+          )}
+
+          {activePage.widgets.news && (
+            <Paper key="news" sx={paperStyle}>
+              <DragHandle />
+              <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+                <NewsWidget />
+              </Box>
+            </Paper>
+          )}
+
+          {activePage.widgets.calendar && (
+            <Paper key="calendar" sx={paperStyle}>
+              <DragHandle />
+              <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+                <CalendarWidget onOpenSettings={() => setSettingsOpen(true)} />
+              </Box>
+            </Paper>
+          )}
+          
+          {activePage.widgets.notes && (
+            <Paper key="notes" sx={paperStyle}>
+              <DragHandle />
+              <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+                <NotesWidget />
+              </Box>
+            </Paper>
+          )}
+
+        </ResponsiveGridLayout>
+      </Box>
 
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </Box>
