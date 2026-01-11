@@ -19,7 +19,7 @@ export const STATIONS = [
     id: '106.5', 
     name: '106.5 FM', 
     type: 'live', 
-    url: 'https://live.amperwave.net/direct/audacy-wwmxfmaac-imc', // Example stream
+    url: 'https://live.amperwave.net/direct/audacy-wwmxfmaac-imc', 
     color: '#6c5ce7',
     label: 'MIX'
   },

@@ -18,10 +18,10 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 // --- DEFAULT LAYOUTS ---
 const defaultLayouts = {
   lg: [
-    { i: 'clock', x: 0, y: 0, w: 6, h: 8 },
-    { i: 'weather', x: 6, y: 0, w: 6, h: 8 },
-    { i: 'calendar', x: 0, y: 8, w: 12, h: 14 },
-    { i: 'news', x: 0, y: 22, w: 12, h: 3 }, 
+    { i: 'clock', x: 0, y: 3, w: 6, h: 7 },
+    { i: 'weather', x: 0, y: 9, w: 6, h: 8 },
+    { i: 'calendar', x: 6, y: 0, w: 6, h: 18 },
+    { i: 'news', x: 0, y: 0, w: 6, h: 3 }, 
   ],
   md: [
     { i: 'clock', x: 0, y: 0, w: 6, h: 8 },

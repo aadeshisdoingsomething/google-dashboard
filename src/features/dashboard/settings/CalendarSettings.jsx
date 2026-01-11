@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, FormControl, InputLabel, Select, MenuItem, TextField } from '@mui/material';
+import { Box, Typography, FormControl, InputLabel, Select, MenuItem, TextField, IconButton, Tooltip } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useSettings } from '../../../context/SettingsContext';
+import CalendarHelpDialog from './CalendarHelpDialog';
 
 const CalendarSettings = ({ onUrlChange }) => {
   const { 
@@ -9,20 +11,38 @@ const CalendarSettings = ({ onUrlChange }) => {
   } = useSettings();
   
   const [localUrl, setLocalUrl] = useState(calendarUrl);
+  const [helpOpen, setHelpOpen] = useState(false);
 
-  // Sync local state with global state updates if needed
+  // Sync local state
   useEffect(() => {
     setLocalUrl(calendarUrl);
   }, [calendarUrl]);
 
   const handleChange = (e) => {
-    setLocalUrl(e.target.value);
-    onUrlChange(e.target.value);
+    let value = e.target.value;
+    
+    // SMART PASTE: If user pastes the full <iframe> code, extract the src
+    if (value.includes('<iframe') && value.includes('src="')) {
+      const srcMatch = value.match(/src="([^"]+)"/);
+      if (srcMatch && srcMatch[1]) {
+        value = srcMatch[1];
+      }
+    }
+
+    setLocalUrl(value);
+    onUrlChange(value);
   };
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom color="primary">Calendar</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+        <Typography variant="h6" color="primary">Calendar</Typography>
+        <Tooltip title="Setup Instructions">
+          <IconButton size="small" onClick={() => setHelpOpen(true)} color="primary">
+            <InfoOutlinedIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
       
       <FormControl fullWidth size="small" sx={{ mb: 2 }}>
           <InputLabel>Auto Refresh</InputLabel>
@@ -40,9 +60,12 @@ const CalendarSettings = ({ onUrlChange }) => {
         value={localUrl} 
         onChange={handleChange}
         variant="outlined"
-        placeholder="<iframe src='...'>"
+        placeholder="Paste 'Embed code' here..."
+        helperText={localUrl.startsWith('<iframe') ? "Full iframe tag detected (will be cleaned on save)" : ""}
         sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
       />
+
+      <CalendarHelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     </Box>
   );
 };
