@@ -30,6 +30,9 @@ my-dashboard
 ├── .gitignore
 ├── README.md
 ├── eslint.config.js
+├── functions/
+│   └── api/
+│       └── npr.js
 ├── index.html
 ├── mychanges.txt
 ├── package-lock.json
@@ -97,10 +100,11 @@ my-dashboard
 
 
 
-3.  **Run Development Server:**
+3.  **Run Development Server (with Cloudflare Functions):**
     ```bash
-    npm run dev
+    npm run dev:cf
     ```
+    *Note: This utilizes `wrangler` to simulate Cloudflare Pages Functions locally. The standard `npm run dev` will not properly route `/api` requests.*
 
 4.  **Build for Production:**
     ```bash

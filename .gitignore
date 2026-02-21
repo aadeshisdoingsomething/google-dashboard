@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Cloudflare Pages / Wrangler
+.wrangler/

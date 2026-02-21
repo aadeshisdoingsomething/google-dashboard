@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Divider, 
-  Typography, Collapse, Paper 
+import {
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Divider,
+  Typography, Collapse, Paper
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -21,20 +21,20 @@ import CalendarSettings from './settings/CalendarSettings';
 // Clean Expandable Item Component
 // FIX: Changed borderRadius from 3 to '16px' to prevent Pill shape
 const SettingItem = ({ title, children, isOpen, onToggle }) => (
-  <Paper 
-    elevation={0} 
-    sx={{ 
-      border: '1px solid', 
-      borderColor: 'divider', 
+  <Paper
+    elevation={0}
+    sx={{
+      border: '1px solid',
+      borderColor: 'divider',
       borderRadius: '16px', // FIXED
-      overflow: 'hidden', 
-      mb: 1 
+      overflow: 'hidden',
+      mb: 1
     }}
   >
-    <Box 
+    <Box
       onClick={onToggle}
-      sx={{ 
-        p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+      sx={{
+        p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         cursor: 'pointer', bgcolor: isOpen ? 'action.hover' : 'transparent',
         transition: '0.2s'
       }}
@@ -54,13 +54,13 @@ const SettingItem = ({ title, children, isOpen, onToggle }) => (
 const SettingsPanel = ({ open, onClose }) => {
   const settings = useSettings();
   const [tempCalUrl, setTempCalUrl] = useState(settings.calendarUrl);
-  
+
   // Search Logic
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchMode, setSearchMode] = useState(null); 
-  
+  const [searchMode, setSearchMode] = useState(null);
+
   // UI State for expanded sections
   const [expandedSection, setExpandedSection] = useState(null);
 
@@ -103,11 +103,11 @@ const SettingsPanel = ({ open, onClose }) => {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
       <DialogTitle sx={{ fontWeight: 'bold' }}>Dashboard Settings</DialogTitle>
-      
+
       <DialogContent sx={{ px: 2 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
-          
-          <SearchOverlay 
+
+          <SearchOverlay
             mode={searchMode}
             searchTerm={searchTerm}
             onSearchTermChange={setSearchTerm}
@@ -121,35 +121,35 @@ const SettingsPanel = ({ open, onClose }) => {
           {!searchMode && (
             <>
               <InstallAppSection />
-              
+
               <PageSettings />
-              
+
               <Divider />
-              
+
               <GeneralSettings onReplayTutorial={() => { settings.setTutorialSeen(false); onClose(); }} />
 
               <Box>
                 <Typography variant="h6" color="primary" sx={{ mb: 2 }}>Widget Configuration</Typography>
-                
-                <SettingItem 
-                  title="Weather" 
-                  isOpen={expandedSection === 'weather'} 
+
+                <SettingItem
+                  title="Weather"
+                  isOpen={expandedSection === 'weather'}
                   onToggle={() => handleToggle('weather')}
                 >
                   <WeatherSettings onSearchRequest={setSearchMode} />
                 </SettingItem>
 
-                <SettingItem 
-                  title="World Clocks" 
-                  isOpen={expandedSection === 'clocks'} 
+                <SettingItem
+                  title="World Clocks"
+                  isOpen={expandedSection === 'clocks'}
                   onToggle={() => handleToggle('clocks')}
                 >
                   <ClockSettings onSearchRequest={setSearchMode} />
                 </SettingItem>
 
-                <SettingItem 
-                  title="Google Calendar" 
-                  isOpen={expandedSection === 'calendar'} 
+                <SettingItem
+                  title="Google Calendar"
+                  isOpen={expandedSection === 'calendar'}
                   onToggle={() => handleToggle('calendar')}
                 >
                   <CalendarSettings onUrlChange={setTempCalUrl} />
@@ -157,7 +157,7 @@ const SettingsPanel = ({ open, onClose }) => {
               </Box>
 
               <Box sx={{ textAlign: 'center', mt: 2, opacity: 0.5 }}>
-                <Typography variant="caption">Version: 0.9.5</Typography>
+                <Typography variant="caption">Version: 0.9.6</Typography>
               </Box>
             </>
           )}
