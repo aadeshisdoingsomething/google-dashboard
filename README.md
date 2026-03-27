@@ -2,16 +2,20 @@
 
 A personal home dashboard application built with React, Material UI, and Vite. Designed with Material You (M3) aesthetics, featuring a PIN-protected entry and a widget-based layout.
 
+## Why
+Made this because i had an extra tablet lying around and wanted to turn it into a useful device
+
 ## Features
 
--   **PIN Protection:** Secure access with a numeric keypad.
+-   **PIN Protection:** Secure access with a numeric keypad. (by default is 1234)
 -   **Dashboard:**
     -   Draggable and responsive widget layout (using `react-grid-layout`).
     -   **Clock Widget:** Displays current time and date.
     -   **Weather Widget:** Shows current weather conditions (using OpenWeatherMap API).
-    -   **Calendar Widget:** Displays a calendar view.
+    -   **Calendar Widget:** Displays a calendar view, its a google calendar embed. 
     -   **Settings Panel:** Configure dashboard preferences.
--   **Theming:** Dark/Light mode support (currently set to Dark Mode) with Material Design 3 tokens.
+    -   **News Widget:** Allows you to listen to news from npr.
+-   **Theming:** Dark/Light mode support with Material Design 3 tokens.
 -   **PWA Support:** Configured for installation as a standalone app on devices.
 
 ## Tech Stack
