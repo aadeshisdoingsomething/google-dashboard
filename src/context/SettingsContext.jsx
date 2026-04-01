@@ -38,11 +38,11 @@ export const SettingsProvider = ({ children }) => {
 
   // --- Legacy Data (For Migration Only) ---
   const [oldLayouts] = useLocalStorage('dashboard_layouts_v7', null);
-  const [oldShowClock] = useLocalStorage('app_show_clock', true);
-  const [oldShowWeather] = useLocalStorage('app_show_weather', true);
-  const [oldShowCalendar] = useLocalStorage('app_show_calendar', true);
-  const [oldShowNews] = useLocalStorage('app_show_news', true);
-  const [oldShowNotes] = useLocalStorage('app_show_notes', true);
+  const [oldShowClock] = useLocalStorage('app_show_clock', DEFAULT_WIDGET_CONFIG.clock);
+  const [oldShowWeather] = useLocalStorage('app_show_weather', DEFAULT_WIDGET_CONFIG.weather);
+  const [oldShowCalendar] = useLocalStorage('app_show_calendar', DEFAULT_WIDGET_CONFIG.calendar);
+  const [oldShowNews] = useLocalStorage('app_show_news', DEFAULT_WIDGET_CONFIG.news);
+  const [oldShowNotes] = useLocalStorage('app_show_notes', DEFAULT_WIDGET_CONFIG.notes);
 
   // --- Settings (Global) ---
   // These remain global across all pages
