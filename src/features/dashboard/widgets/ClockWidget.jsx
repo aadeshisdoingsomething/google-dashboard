@@ -82,16 +82,18 @@ const ClockWidget = () => {
         {/* Scalable SVG Time */}
         <Box sx={{ width: '100%', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', maxHeight: '60px' }}>
           <svg width="100%" height="100%" viewBox="0 0 100 40" preserveAspectRatio="xMidYMid meet">
-            <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle"
+            <text x="50%" y="32" textAnchor="middle"
               fill={textColor} style={{ fontFamily: '"Google Sans", sans-serif', fontWeight: 400, fontSize: '32px' }}>
               {timeData.time}
+              {timeFormat === '12h' && timeData.ampm && (
+                <tspan fontSize="12px" fill={accentColor} fontWeight="600" dx="2">{timeData.ampm}</tspan>
+              )}
             </text>
           </svg>
         </Box>
 
-        {/* Date + AM/PM */}
-        <Typography variant="caption" sx={{ color: subTextColor, mt: -0.5, textAlign: 'center' }}>
-           {timeFormat === '12h' && <span style={{ color: accentColor, fontWeight: 600, marginRight: 4 }}>{timeData.ampm}</span>}
+        {/* Date */}
+        <Typography variant="body2" sx={{ color: subTextColor, mt: -0.5, textAlign: 'center' }}>
            {dateStr}
         </Typography>
       </Box>
@@ -125,17 +127,19 @@ const ClockWidget = () => {
            maxHeight: hasWorldClocks ? '70%' : '80%' 
          }}>
             <svg width="100%" height="100%" viewBox="0 0 200 80" preserveAspectRatio="xMidYMid meet">
-              <text x="50%" y="55%" dominantBaseline="middle" textAnchor="middle"
+              <text x="50%" y="63" textAnchor="middle"
                 fill={textColor} style={{ fontFamily: '"Google Sans", sans-serif', fontWeight: 400, fontSize: '65px' }}>
                 {localTime.time}
+                {timeFormat === '12h' && localTime.ampm && (
+                  <tspan fontSize="24px" fill={accentColor} fontWeight="500" dx="4">{localTime.ampm}</tspan>
+                )}
               </text>
             </svg>
          </Box>
 
          {/* Date */}
          <Box sx={{ mt: -1, textAlign: 'center', width: '100%' }}>
-            <Typography variant="h6" sx={{ color: subTextColor, fontWeight: 400, lineHeight: 1.2 }}>
-               {timeFormat === '12h' && <span style={{ marginRight: 8, fontWeight: 500, color: accentColor }}>{localTime.ampm}</span>}
+            <Typography variant="h5" sx={{ color: subTextColor, fontWeight: 400, lineHeight: 1.2 }}>
                {localDate}
             </Typography>
          </Box>
