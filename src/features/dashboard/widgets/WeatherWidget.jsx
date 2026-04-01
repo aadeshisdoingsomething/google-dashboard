@@ -82,7 +82,7 @@ const WeatherWidget = () => {
       try {
         setLoading(true);
         const unitParam = tempUnit === 'celsius' ? 'celsius' : 'fahrenheit';
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${weatherLocation.lat}&longitude=${weatherLocation.lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=${unitParam}&wind_speed_unit=ms&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${weatherLocation.lat}&longitude=${weatherLocation.lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=${unitParam}&wind_speed_unit=ms&timezone=auto&forecast_days=8`;
 
         const res = await fetch(url);
         if (!res.ok) throw new Error("API Error");
@@ -255,7 +255,7 @@ const WeatherWidget = () => {
                 // Add some padding if it feels too close to edges, but the gap handles internal spacing
                 px: '0.5em' 
             }}>
-              {daily.time.slice(1, 6).map((day, index) => { 
+              {daily.time.slice(1, 8).map((day, index) => { 
                 const dayCode = daily.weather_code[index + 1];
                 const info = getWeatherInfo(dayCode);
                 const maxT = Math.round(daily.temperature_2m_max[index + 1]);
